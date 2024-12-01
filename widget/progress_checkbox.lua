@@ -1,15 +1,13 @@
 local Button = require("ui/widget/button")
-local Device = require("device")
 local _ = require("gettext")
 local TopContainer = require("ui/widget/container/topcontainer")
+local logger = require("logger")
 
--- TODO custom icons for check states
-local TICKS = {
-  [0] = "",
-  "‒",
-  "🞣",
-  "✻",
-  "❊",
+local tick_images = {
+  "icon/check_1.svg",
+  "icon/check_2.svg",
+  "icon/check_3.svg",
+  "icon/check_4.svg",
 }
 
 local ProgressCheckbox = TopContainer:extend{
@@ -17,7 +15,8 @@ local ProgressCheckbox = TopContainer:extend{
   width = 30,
   height = 24,
   callback = nil,
-  margin = nil
+  margin = nil,
+  path = ""
 }
 
 function ProgressCheckbox:getSize()
@@ -25,7 +24,17 @@ function ProgressCheckbox:getSize()
 end
 
 function ProgressCheckbox:update()
-  self.button:setText(self.button:text_func(), self.button.width)
+  local icon = self.button.label_widget
+  if self.value == 0 then
+    icon.hide = true
+  else
+    icon.hide = false
+    icon:free()
+    icon._bb = nil
+    icon.file = self.path .. "/" .. tick_images[self.value]
+    icon:init()
+  end
+
   self.button:refresh()
 end
 
@@ -38,17 +47,18 @@ function ProgressCheckbox:init()
   local callback = self.callback or function() self:increment() end
 
   self.button = Button:new {
-    width = 30,
-    height = 21,
+    width = 25,
+    height = 25,
     padding = 0,
-    text_font_size = 24,
-    margin = self.margin,
+    text_font_size = 16,
+    icon = "",
+    icon_width = 23,
+    icon_height = 23,
+    margin = 0,
     bordersize = 1,
-    text_func = function()
-      return TICKS[self.value]
-    end,
     callback = callback
   }
+  self:update()
 
   self[1] = self.button
 end

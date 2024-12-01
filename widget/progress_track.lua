@@ -3,6 +3,7 @@ local HorizontalGroup = require("ui/widget/horizontalgroup")
 local _ = require("gettext")
 local logger = require("logger")
 local TopContainer = require("ui/widget/container/topcontainer")
+local HorizontalSpan = require("ui/widget/horizontalspan")
 
 local ProgressCheckbox = require("widget/progress_checkbox")
 
@@ -11,6 +12,7 @@ local ProgressTrack = TopContainer:extend{
   width = 400,
   height = 50,
   increment_value = 1,
+  path = nil
 }
 
 function ProgressTrack:getSize()
@@ -45,36 +47,47 @@ end
 function ProgressTrack:init()
   self.checkboxes = {}
 
-  local set_value = function(i)
-    local start_value = (i - 1) * 4 + self.checkboxes[i].value
-    local next_value = (math.floor(start_value / self.increment_value) + 1) * self.increment_value
-
-    if self.checkboxes[i].value > 0 and next_value > i * 4 then
-      next_value = math.floor((i - 1) * 4 / self.increment_value) * self.increment_value
-    end
-
-    self.value = next_value
-    self:update()
+  self.checkboxes = self:buildCheckboxes()
+  local group_content = {}
+  for i=1,10 do
+    table.insert(group_content, self.checkboxes[i])
+    table.insert(group_content, HorizontalSpan:new { width = 4 })
   end
+  self[1] = HorizontalGroup:new{
+    table.unpack(group_content)
+  }
+end
 
+function ProgressTrack:buildCheckboxes()
   local total = self.value
-
+  local checkboxes = {}
   for i=1,10 do
     local value = math.min(4, total)
     total = total - value
 
-    self.checkboxes[i] = ProgressCheckbox:new{
+    checkboxes[i] = ProgressCheckbox:new{
       value = value,
       margin = 3,
+      path = self.path,
       callback = function()
-        set_value(i)
+        self:selectCheckbox(i)
       end
     }
   end
 
-  self[1] = HorizontalGroup:new{
-    table.unpack(self.checkboxes)
-  }
+  return checkboxes
+end
+
+function ProgressTrack:selectCheckbox(i)
+  local start_value = (i - 1) * 4 + self.checkboxes[i].value
+  local next_value = (math.floor(start_value / self.increment_value) + 1) * self.increment_value
+
+  if self.checkboxes[i].value > 0 and next_value > i * 4 then
+    next_value = math.floor((i - 1) * 4 / self.increment_value) * self.increment_value
+  end
+
+  self.value = next_value
+  self:update()
 end
 
 return ProgressTrack
