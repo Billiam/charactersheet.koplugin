@@ -4,13 +4,15 @@ local _ = require("gettext")
 local logger = require("logger")
 local TopContainer = require("ui/widget/container/topcontainer")
 local HorizontalSpan = require("ui/widget/horizontalspan")
-
 local ProgressCheckbox = require("widget/progress_checkbox")
+
+local Screen = Device.screen
 
 local ProgressTrack = TopContainer:extend{
   value = 0,
-  width = 400,
-  height = 50,
+  width = 300,
+  height = 30,
+  checkbox_size = Screen:scaleBySize(25),
   increment_value = 1,
   path = nil
 }
@@ -67,8 +69,9 @@ function ProgressTrack:buildCheckboxes()
 
     checkboxes[i] = ProgressCheckbox:new{
       value = value,
-      margin = 3,
       path = self.path,
+      width = self.checkbox_size,
+      height = self.checkbox_size,
       callback = function()
         self:selectCheckbox(i)
       end

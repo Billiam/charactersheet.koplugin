@@ -1,8 +1,7 @@
 local Button = require("ui/widget/button")
 local _ = require("gettext")
-local TopContainer = require("ui/widget/container/topcontainer")
 local logger = require("logger")
-
+local InputContainer = require("ui/widget/container/inputcontainer")
 local tick_images = {
   "icon/check_1.svg",
   "icon/check_2.svg",
@@ -10,10 +9,10 @@ local tick_images = {
   "icon/check_4.svg",
 }
 
-local ProgressCheckbox = TopContainer:extend{
+local ProgressCheckbox = InputContainer:extend{
   value = 0,
-  width = 30,
-  height = 24,
+  width = 25,
+  height = 25,
   callback = nil,
   margin = nil,
   path = ""
@@ -44,16 +43,17 @@ function ProgressCheckbox:increment()
 end
 
 function ProgressCheckbox:init()
+
   local callback = self.callback or function() self:increment() end
 
   self.button = Button:new {
-    width = 25,
-    height = 25,
+    width = self.width,
+    height = self.height - 2,  -- inner frame border handles size inconsistently
     padding = 0,
     text_font_size = 16,
     icon = "",
-    icon_width = 23,
-    icon_height = 23,
+    icon_width = self.width - 2,
+    icon_height = self.height - 2,
     margin = 0,
     bordersize = 1,
     callback = callback
