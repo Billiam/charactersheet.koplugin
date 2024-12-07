@@ -16,7 +16,7 @@ local Geom = require("ui/geometry")
 local Screen = Device.screen
 
 local Stat =  FocusManager:extend{
-  width = 50,
+  width = Screen:scaleBySize(50),
 
   label = nil,
   value = nil,
@@ -29,7 +29,7 @@ local Stat =  FocusManager:extend{
   secondary_min = nil,
   secondary_max = nil,
 
-  label_font_size = 16
+  label_font_size = 14
 }
 local function show_spinner(button, value, min, max, label, callback)
   local spinner = SpinWidget:new{
@@ -64,17 +64,18 @@ function Stat:init()
   local divider
   if self.has_secondary_value then
     divider = LineWidget:new{
-      dimen = Geom:new {
-        h = Size.border.thin,
-        w = self.width - 2
+        dimen = Geom:new {
+          h = Size.border.thin,
+          w = self.width - Size.border.thin * 2,
+        },
       }
-    }
     self.secondary_button =  Button:new {
       text = self.secondary_value,
       bordersize = 0,
       radius = 0,
       text_font_size = 14,
       height = 10,
+      padding = 8,
       width = self.width - 4,
       callback = function()
         show_spinner(self.secondary_button, self.secondary_value, self.secondary_min, self.secondary_max, self.secondary_label or (self.label .. " (secondary)"),function(value)
@@ -87,7 +88,8 @@ function Stat:init()
   local block = VerticalGroup:new{
     TextWidget:new{
       face = Font:getFace("cfont", self.label_font_size),
-      text = self.label
+      text = self.label,
+      max_width = self.width - Screen:scaleBySize(4)
     },
     self.stat_button,
     divider,
