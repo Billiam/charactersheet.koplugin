@@ -11,7 +11,6 @@ local Screen = Device.screen
 local ProgressTrack = TopContainer:extend{
   value = 0,
   width = 300,
-  height = 30,
   checkbox_size = Screen:scaleBySize(25),
   increment_value = 1,
   path = nil
@@ -48,6 +47,7 @@ end
 
 function ProgressTrack:init()
   self.checkboxes = {}
+  self.height = self.height or self.checkbox_size + 5
 
   self.checkboxes = self:buildCheckboxes()
   local group_content = {}
