@@ -6,6 +6,8 @@ local LineWidget = require("ui/widget/linewidget")
 local Size = require("ui/size")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local FrameContainer = require("ui/widget/container/framecontainer")
+local CenterContainer = require("ui/widget/container/centercontainer")
+
 local TextWidget = require("ui/widget/textwidget")
 local UIManager = require("ui/uimanager")
 local SpinWidget = require("ui/widget/spinwidget")
@@ -29,7 +31,13 @@ local Stat =  FocusManager:extend{
   secondary_min = nil,
   secondary_max = nil,
 
-  label_font_size = 14
+  label_font_size = 14,
+  shadow_color = Blitbuffer.COLOR_GRAY,
+  shadow_x = 5,
+  shadow_y = 5,
+
+  invert_label = false,
+  margin = 2
 }
 local function show_spinner(button, value, min, max, label, callback)
   local spinner = SpinWidget:new{
@@ -85,27 +93,66 @@ function Stat:init()
     }
   end
 
-  local block = VerticalGroup:new{
-    TextWidget:new{
-      face = Font:getFace("cfont", self.label_font_size),
-      text = self.label,
-      max_width = self.width - Screen:scaleBySize(4)
-    },
-    self.stat_button,
-    divider,
-    self.secondary_button
+  local label = TextWidget:new{
+    face = Font:getFace("cfont", self.label_font_size),
+    text = self.label,
+    max_width = self.width - Screen:scaleBySize(4),
+    fgcolor = self.invert_label and Blitbuffer.COLOR_WHITE or Blitbuffer.COLOR_BLACK
+  }
+
+  local block = FrameContainer:new{
+    background = Blitbuffer.COLOR_WHITE,
+    bordersize = Size.border.thin,
+    margin = 0,
+    padding = 0,
+    VerticalGroup:new{
+      align = "left",
+      FrameContainer:new{
+        padding = 0,
+        margin = 0,
+        bordersize = 0,
+        background = self.invert_label and Blitbuffer.COLOR_BLACK,
+        width = self.width - 4,
+        CenterContainer:new{
+          dimen = Geom:new{
+            w = self.width - Screen:scaleBySize(4),
+            h = label:getSize().h
+          },
+          label
+        }
+      },
+      self.stat_button,
+      divider,
+      self.secondary_button
+    }
   }
 
   local frame = FrameContainer:new{
-    bordersize = Size.border.thin,
+    bordersize = 0,
     width = self.width,
+    margin = self.margin,
     padding = 0,
     block
   }
 
-  local h = frame[1]:getSize().h
-
   self[1] = frame
+end
+
+function Stat:paintTo(bb, x, y)
+
+  if self.shadow_color then
+    local my_size = self:getSize()
+    bb:hatchRect(
+      x + self.shadow_x + self.margin,
+      y + self.shadow_y + self.margin,
+      my_size.w - self.margin * 2,
+      my_size.h - self.margin * 2,
+      2,
+      self.shadow_color
+    )
+  end
+
+  self[1]:paintTo(bb, x, y)
 end
 
 return Stat
