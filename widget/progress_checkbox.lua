@@ -15,7 +15,10 @@ local ProgressCheckbox = InputContainer:extend{
   height = 25,
   callback = nil,
   margin = nil,
-  path = ""
+  path = "",
+
+  callback = nil,
+  name = nil,
 }
 
 function ProgressCheckbox:getSize()
@@ -40,6 +43,8 @@ end
 function ProgressCheckbox:increment()
   self.value = self.value < 4 and (self.value + 1) or 0
   self:update()
+
+  self.callback(self.name, self.value)
 end
 
 function ProgressCheckbox:init()

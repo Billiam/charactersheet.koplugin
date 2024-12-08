@@ -91,6 +91,7 @@ function LegacyTrack:updateXp()
     local checked = self.xp >= i
     self.xp_boxes[i]:setChecked(checked)
   end
+  self:updateValue()
 end
 
 function LegacyTrack:selectXp(i)
@@ -99,6 +100,12 @@ function LegacyTrack:selectXp(i)
   else
     self.xp = i
   end
+
   self:updateXp()
 end
+
+function LegacyTrack:updateValue()
+  self.callback(self.name, { xp = self.xp, value = self.value })
+end
+
 return LegacyTrack

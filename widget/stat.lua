@@ -37,7 +37,9 @@ local Stat =  FocusManager:extend{
   shadow_y = 5,
 
   invert_label = false,
-  margin = 2
+  margin = 2,
+  name = nil,
+  callback = nil,
 }
 local function show_spinner(button, value, min, max, label, callback)
   local spinner = SpinWidget:new{
@@ -65,6 +67,7 @@ function Stat:init()
     callback = function()
       show_spinner(self.stat_button, self.value, self.min, self.max, self.label,function(value)
         self.value = value
+        self.callback(self.name, self.value)
       end)
     end
   }

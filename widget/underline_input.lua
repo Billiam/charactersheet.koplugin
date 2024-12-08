@@ -16,6 +16,9 @@ local UnderlineInput = UnderlineContainer:extend{
   linesize = Size.line.thin,
   width = Screen:scaleBySize(50),
 
+  callback = nil,
+  name = nil,
+
   hint = "name",
   align = "left",
 }
@@ -43,7 +46,6 @@ function UnderlineInput:init()
 
           UIManager:close(dialog)
           self:setValue(value, true)
-          -- TODO: notify something about data change
           return false, false
         end
       }
@@ -61,6 +63,7 @@ end
 
 function UnderlineInput:setValue(text, refresh)
   self.input = text
+  self.callback(self.name, text)
 
   if text and text ~= "" then
     self.button:setText(text, self.button.width)

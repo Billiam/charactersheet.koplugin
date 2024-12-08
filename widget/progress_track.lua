@@ -13,7 +13,10 @@ local ProgressTrack = TopContainer:extend{
   width = 300,
   checkbox_size = Screen:scaleBySize(25),
   increment_value = 1,
-  path = nil
+  path = nil,
+
+  callback = nil,
+  name = nil,
 }
 
 function ProgressTrack:getSize()
@@ -43,6 +46,12 @@ function ProgressTrack:update()
       self.checkboxes[i]:update()
     end
   end
+
+  self:updateValue()
+end
+
+function ProgressTrack:updateValue()
+  self.callback(self.name, self.value)
 end
 
 function ProgressTrack:init()
