@@ -20,7 +20,7 @@ local ProgressTrack = TopContainer:extend{
 }
 
 function ProgressTrack:getSize()
-  return {w = self.width, h = self.height }
+  return { w = self.width, h = self.height }
 end
 
 function ProgressTrack:decrement()
@@ -58,12 +58,18 @@ function ProgressTrack:init()
   self.checkboxes = {}
   self.height = self.height or self.checkbox_size + 5
 
+  local spacing = (self.width - (self.checkbox_size) * 10) / 9
+
   self.checkboxes = self:buildCheckboxes()
   local group_content = {}
+
   for i=1,10 do
     table.insert(group_content, self.checkboxes[i])
-    table.insert(group_content, HorizontalSpan:new { width = 4 })
+    if i < 10 then
+      table.insert(group_content, HorizontalSpan:new { width = spacing })
+    end
   end
+
   self[1] = HorizontalGroup:new{
     table.unpack(group_content)
   }
@@ -72,6 +78,7 @@ end
 function ProgressTrack:buildCheckboxes()
   local total = self.value
   local checkboxes = {}
+
   for i=1,10 do
     local value = math.min(4, total)
     total = total - value

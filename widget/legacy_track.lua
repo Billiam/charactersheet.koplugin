@@ -21,11 +21,12 @@ function LegacyTrack:clear()
   ProgressTrack.clear(self)
 end
 
-function LegacyTrack:xpButton(index)
+function LegacyTrack:xpButton(index, size)
   local checked = self.xp >= index
+
   return FilledCheckbox:new{
-    width = self.xp_size,
-    height = self.xp_size - 2,
+    width = size,
+    height = size - 2,
     padding = 0,
     checked = checked,
     callback = function()
@@ -54,18 +55,22 @@ function LegacyTrack:init()
   self.checkboxes = self:buildCheckboxes()
   local checkbox_groups = {}
 
+  local spacing = (self.width - self.checkbox_size * 10) / 9
+  local xp_gap = Screen:scaleBySize(2)
+  local xp_size = math.min(self.xp_size, (self.checkbox_size - xp_gap)/2)
+
   for i=1,10 do
     local xp_index = ((i - 1) * 2) + 1
 
-    local xp1 = self:xpButton(xp_index)
-    local xp2 = self:xpButton(xp_index + 1)
+    local xp1 = self:xpButton(xp_index, xp_size)
+    local xp2 = self:xpButton(xp_index + 1, xp_size)
     self.xp_boxes[xp_index] = xp1
     self.xp_boxes[xp_index + 1] = xp2
 
     local xp_block = HorizontalGroup:new {
       xp1,
       HorizontalSpan:new {
-        width = Screen:scaleBySize(2)
+        width = xp_gap
       },
       xp2,
     }
@@ -77,8 +82,9 @@ function LegacyTrack:init()
       },
       xp_block,
     })
-
-    table.insert(checkbox_groups, HorizontalSpan:new { width = 4 })
+    if i < 10 then
+      table.insert(checkbox_groups, HorizontalSpan:new { width = spacing })
+    end
   end
 
   self[1] = HorizontalGroup:new{
