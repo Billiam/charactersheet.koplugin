@@ -57,8 +57,8 @@ function ProgressCheckbox:init()
     padding = 0,
     text_font_size = 16,
     icon = "",
-    icon_width = self.width - 2,
-    icon_height = self.height - 2,
+    icon_width = self.width - 4,
+    icon_height = self.height - 4,
     margin = 0,
     bordersize = 1,
     callback = callback
