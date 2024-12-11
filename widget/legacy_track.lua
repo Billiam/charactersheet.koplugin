@@ -55,12 +55,19 @@ function LegacyTrack:init()
   self.checkboxes = self:buildCheckboxes()
   local checkbox_groups = {}
 
-  local spacing = (self.width - self.checkbox_size * 10) / 9
+  local spacing = self.spacing
+
+  if spacing then
+    self.width = self.checkbox_size * 10 + 9 * self.spacing
+  else
+    spacing = (self.width - (self.checkbox_size) * 10) / 9
+  end
+
   local xp_gap = Screen:scaleBySize(2)
   local xp_size = math.min(self.xp_size, (self.checkbox_size - xp_gap)/2)
 
   for i=1,10 do
-    local xp_index = ((i - 1) * 2) + 1
+    local xp_index = (i - 1) * 2 + 1
 
     local xp1 = self:xpButton(xp_index, xp_size)
     local xp2 = self:xpButton(xp_index + 1, xp_size)
