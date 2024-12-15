@@ -10,7 +10,7 @@ local FilledCheckbox = require("widget/filled_checkbox")
 
 local Screen = Device.screen
 
-local LegacyTrack = ProgressTrack:extend{
+local LegacyTrack = ProgressTrack:extend {
   xp = 0,
   checkbox_size = Screen:scaleBySize(36),
   xp_size = Screen:scaleBySize(17),
@@ -24,7 +24,7 @@ end
 function LegacyTrack:xpButton(index, size)
   local checked = self.xp >= index
 
-  return FilledCheckbox:new{
+  return FilledCheckbox:new {
     width = size,
     height = size - 2,
     padding = 0,
@@ -45,7 +45,7 @@ function LegacyTrack:xpCallback(index)
 end
 
 function LegacyTrack:init()
-  self.increment_value = 4
+  self.increment_value = 1
 
   self.checkboxes = {}
   self.xp_boxes = {}
@@ -64,9 +64,9 @@ function LegacyTrack:init()
   end
 
   local xp_gap = Screen:scaleBySize(2)
-  local xp_size = math.min(self.xp_size, (self.checkbox_size - xp_gap)/2)
+  local xp_size = math.min(self.xp_size, (self.checkbox_size - xp_gap) / 2)
 
-  for i=1,10 do
+  for i = 1, 10 do
     local xp_index = (i - 1) * 2 + 1
 
     local xp1 = self:xpButton(xp_index, xp_size)
@@ -82,7 +82,7 @@ function LegacyTrack:init()
       xp2,
     }
 
-    table.insert(checkbox_groups, VerticalGroup:new{
+    table.insert(checkbox_groups, VerticalGroup:new {
       self.checkboxes[i],
       VerticalSpan:new {
         width = Screen:scaleBySize(4)
@@ -94,13 +94,13 @@ function LegacyTrack:init()
     end
   end
 
-  self[1] = HorizontalGroup:new{
+  self[1] = HorizontalGroup:new {
     table.unpack(checkbox_groups)
   }
 end
 
 function LegacyTrack:updateXp()
- for i=1,20 do
+  for i = 1, 20 do
     local checked = self.xp >= i
     self.xp_boxes[i]:setChecked(checked)
   end
