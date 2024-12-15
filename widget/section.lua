@@ -2,20 +2,36 @@ local FrameContainer = require("ui/widget/container/framecontainer")
 local TextWidget = require("ui/widget/textwidget")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local CenterContainer = require("ui/widget/container/centercontainer")
+local LeftContainer = require("ui/widget/container/leftcontainer")
+local RightContainer = require("ui/widget/container/rightcontainer")
+
 local Blitbuffer = require("ffi/blitbuffer")
 local Font = require("ui/font")
 local Size = require("ui/size")
 local Geom = require("ui/geometry")
 
-local Section = FrameContainer:extend{
-  label = "section",
+local Section = FrameContainer:extend {
+  label = nil,
   label_position = "top",
   label_size = 16,
+  label_alignment = "center",
+  align = "center",
   items = {},
   invert_label = false,
   inner_padding = Size.padding.default,
   margin = 2,
 }
+
+function Section:labelClass()
+  if self.label_alignment == "right" then
+    return RightContainer
+  end
+  if self.label_alignment == "left" then
+    return LeftContainer
+  end
+
+  return CenterContainer
+end
 
 function Section:init()
   self.padding = 0
@@ -23,7 +39,7 @@ function Section:init()
   self.content = FrameContainer:new {
     bordersize = 0,
     padding = self.inner_padding,
-    VerticalGroup:new{
+    VerticalGroup:new {
       align = "left",
       table.unpack(self.items)
     }
@@ -34,19 +50,19 @@ function Section:init()
     width = self.content:getSize().w
   end
 
-  local text = TextWidget:new{
+  local text = TextWidget:new {
     text = self.label,
     fgcolor = self.invert_label and Blitbuffer.COLOR_WHITE or Blitbuffer.COLOR_BLACK,
     face = Font:getFace("cfont", self.label_size)
   }
 
-  local label = FrameContainer:new{
+  local label = FrameContainer:new {
     bordersize = 0,
     width = width,
     padding = 0,
     margin = 0,
     background = self.invert_label and Blitbuffer.COLOR_BLACK or Blitbuffer.COLOR_WHITE,
-    CenterContainer:new {
+    self:labelClass():new {
       dimen = Geom:new {
         w = width,
         h = text:getSize().h
@@ -56,7 +72,7 @@ function Section:init()
   }
 
   local outer_group = VerticalGroup:new {
-    align = "left",
+    align = self.align,
     self.content,
   }
 
@@ -68,6 +84,5 @@ function Section:init()
 
   self[1] = outer_group
 end
-
 
 return Section
