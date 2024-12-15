@@ -8,10 +8,10 @@ local ProgressCheckbox = require("widget/progress_checkbox")
 
 local Screen = Device.screen
 
-local ProgressTrack = TopContainer:extend{
+local ProgressTrack = TopContainer:extend {
   value = 0,
   spacing = Screen:scaleBySize(5),
-  checkbox_size = Screen:scaleBySize(25),
+  checkbox_size = Screen:scaleBySize(36),
   increment_value = 1,
   path = nil,
 
@@ -24,11 +24,11 @@ function ProgressTrack:getSize()
 end
 
 function ProgressTrack:decrement()
-  self.value = math.max(0,self.value - self.increment_value)
+  self.value = math.max(0, self.value - self.increment_value)
 end
 
 function ProgressTrack:increment()
-  self.value = math.min(40,self.value + self.increment_value)
+  self.value = math.min(40, self.value + self.increment_value)
 end
 
 function ProgressTrack:clear()
@@ -38,7 +38,7 @@ end
 
 function ProgressTrack:update()
   local total = self.value
-  for i=1,10 do
+  for i = 1, 10 do
     local value = math.min(4, total)
     total = total - value
     if self.checkboxes[i].value ~= value then
@@ -68,14 +68,14 @@ function ProgressTrack:init()
   self.checkboxes = self:buildCheckboxes()
   local group_content = {}
 
-  for i=1,10 do
+  for i = 1, 10 do
     table.insert(group_content, self.checkboxes[i])
     if i < 10 then
       table.insert(group_content, HorizontalSpan:new { width = spacing })
     end
   end
 
-  self[1] = HorizontalGroup:new{
+  self[1] = HorizontalGroup:new {
     table.unpack(group_content)
   }
 end
@@ -84,11 +84,11 @@ function ProgressTrack:buildCheckboxes()
   local total = self.value
   local checkboxes = {}
 
-  for i=1,10 do
+  for i = 1, 10 do
     local value = math.min(4, total)
     total = total - value
 
-    checkboxes[i] = ProgressCheckbox:new{
+    checkboxes[i] = ProgressCheckbox:new {
       value = value,
       path = self.path,
       width = self.checkbox_size,
