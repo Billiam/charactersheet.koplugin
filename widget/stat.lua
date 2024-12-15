@@ -1,23 +1,28 @@
 local Blitbuffer = require("ffi/blitbuffer")
-local Button = require("ui/widget/button")
-local Device = require("device")
-local FocusManager = require("ui/widget/focusmanager")
-local LineWidget = require("ui/widget/linewidget")
-local Size = require("ui/size")
-local VerticalGroup = require("ui/widget/verticalgroup")
-local FrameContainer = require("ui/widget/container/framecontainer")
-local CenterContainer = require("ui/widget/container/centercontainer")
 
-local TextWidget = require("ui/widget/textwidget")
-local UIManager = require("ui/uimanager")
-local SpinWidget = require("ui/widget/spinwidget")
+local Device = require("device")
+local logger = require("logger")
 local _ = require("gettext")
 
 local Font = require("ui/font")
 local Geom = require("ui/geometry")
+local GestureRange = require("ui/gesturerange")
+local Size = require("ui/size")
+local UIManager = require("ui/uimanager")
+
+local Button = require("ui/widget/button")
+local LineWidget = require("ui/widget/linewidget")
+local SpinWidget = require("ui/widget/spinwidget")
+local TextWidget = require("ui/widget/textwidget")
+local VerticalGroup = require("ui/widget/verticalgroup")
+
+local CenterContainer = require("ui/widget/container/centercontainer")
+local FrameContainer = require("ui/widget/container/framecontainer")
+local InputContainer = require("ui/widget/container/inputcontainer")
+
 local Screen = Device.screen
 
-local Stat =  FocusManager:extend{
+local Stat = InputContainer:extend {
   width = Screen:scaleBySize(50),
 
   label = nil,
@@ -31,6 +36,7 @@ local Stat =  FocusManager:extend{
   secondary_min = nil,
   secondary_max = nil,
 
+  value_font_size = 18,
   label_font_size = 14,
   shadow_color = Blitbuffer.COLOR_GRAY,
   shadow_x = 5,
@@ -40,47 +46,24 @@ local Stat =  FocusManager:extend{
   margin = 2,
   name = nil,
   callback = nil,
+  hold_callback = nil,
 }
-local function show_spinner(button, value, min, max, label, callback)
-  local spinner = SpinWidget:new{
-    value = value,
-    value_min = min,
-    value_max = max,
-    value_step = 1,
-    ok_text = _("Save"),
-    title_text = _("Set " .. label),
-    callback = function(spin)
-      button:setText(spin.value, button.width)
-      button:refresh()
-      callback(spin.value)
-    end
-  }
-
-  UIManager:show(spinner)
-end
 
 function Stat:init()
-  self.stat_button = Button:new{
+  self.value_text = TextWidget:new {
     text = self.value,
-    width = self.width - 4,
-    bordersize = 0,
-    callback = function()
-      show_spinner(self.stat_button, self.value, self.min, self.max, self.label,function(value)
-        self.value = value
-        self.callback(self.name, self.value)
-      end)
-    end
+    face = Font:getFace("cfont", self.value_font_size),
+    bold = true,
   }
-
   local divider
   if self.has_secondary_value then
-    divider = LineWidget:new{
-        dimen = Geom:new {
-          h = Size.border.thin,
-          w = self.width - Size.border.thin * 2,
-        },
-      }
-    self.secondary_button =  Button:new {
+    divider = LineWidget:new {
+      dimen = Geom:new {
+        h = Size.border.thin,
+        w = self.width - Size.border.thin * 2,
+      },
+    }
+    self.secondary_button = Button:new {
       text = self.secondary_value,
       bordersize = 0,
       radius = 0,
@@ -89,48 +72,57 @@ function Stat:init()
       padding = 8,
       width = self.width - 4,
       callback = function()
-        show_spinner(self.secondary_button, self.secondary_value, self.secondary_min, self.secondary_max, self.secondary_label or (self.label .. " (secondary)"),function(value)
+        self:showSpinner(false, self.secondary_value, self.secondary_min, self.secondary_max, self.secondary_label or (self.label .. " (secondary)"), function(value)
           self.value = value
         end)
       end
     }
   end
 
-  local label = TextWidget:new{
+  local label = TextWidget:new {
     face = Font:getFace("cfont", self.label_font_size),
     text = self.label,
     max_width = self.width - Screen:scaleBySize(4),
     fgcolor = self.invert_label and Blitbuffer.COLOR_WHITE or Blitbuffer.COLOR_BLACK
   }
 
-  local block = FrameContainer:new{
+  self.value_box = CenterContainer:new {
+    show_parent = self,
+    dimen = Geom:new {
+      w = self.width - 4,
+      h = self.value_text:getSize().h
+    },
+    self.value_text,
+  }
+
+  local block = FrameContainer:new {
     background = Blitbuffer.COLOR_WHITE,
     bordersize = Size.border.thin,
     margin = 0,
     padding = 0,
-    VerticalGroup:new{
+    VerticalGroup:new {
       align = "left",
-      FrameContainer:new{
+      FrameContainer:new {
         padding = 0,
         margin = 0,
         bordersize = 0,
         background = self.invert_label and Blitbuffer.COLOR_BLACK,
         width = self.width - 4,
-        CenterContainer:new{
-          dimen = Geom:new{
+        CenterContainer:new {
+          dimen = Geom:new {
             w = self.width - Screen:scaleBySize(4),
             h = label:getSize().h
           },
           label
         }
       },
-      self.stat_button,
+      self.value_box,
       divider,
       self.secondary_button
     }
   }
 
-  local frame = FrameContainer:new{
+  local frame = FrameContainer:new {
     bordersize = 0,
     width = self.width,
     margin = self.margin,
@@ -139,10 +131,104 @@ function Stat:init()
   }
 
   self[1] = frame
+  self.dimen = frame:getSize()
+
+  self.ges_events = {
+    Tap = {
+      GestureRange:new {
+        ges = "tap",
+        range = self.dimen
+      }
+    },
+    Swipe = {
+      GestureRange:new {
+        ges = "swipe",
+        range = self.dimen
+      }
+    }
+  }
+  if self.hold_callback then
+    self.ges_events.Hold = {
+      GestureRange:new {
+        ges = "hold",
+        range = self.dimen
+      }
+    }
+  end
+end
+
+function Stat:showSpinner(primary_label, value, min, max, label, callback)
+  local spinner = SpinWidget:new {
+    value = value,
+    value_min = min,
+    value_max = max,
+    value_step = 1,
+    ok_text = _("Save"),
+    title_text = _("Set " .. label),
+
+    callback = function(spin)
+      if primary_label then
+        self:setValue(spin.value)
+        self.value_text:setText(spin.value)
+        UIManager:setDirty(self.value_box, "partial")
+      else
+        self.secondary_button:setText(spin.value)
+        self.secondary_button:refresh()
+      end
+      callback(spin.value)
+    end
+  }
+
+  UIManager:show(spinner)
+end
+
+function Stat:increment()
+  self:deviate(1)
+end
+
+function Stat:decrement()
+  self:deviate(-1)
+end
+
+function Stat:deviate(amount)
+  local original_value = self.value
+  self.value = math.min(self.max, math.max(self.min, self.value + amount))
+  if self.value ~= original_value then
+    self.value_text:setText(self.value)
+    UIManager:setDirty(self.show_parent, "partial", self.dimen)
+    self.callback(self.name, self.value)
+  end
+end
+
+function Stat:onSwipe(_, ges)
+  local direction = ges.direction
+  if direction == "north" then
+    self:increment()
+  elseif direction == "south" then
+    self:decrement()
+  end
+end
+
+function Stat:onTap()
+  self:showSpinner(true, self.value, self.min, self.max, self.label, function(value)
+    self.value = value
+    self.callback(self.name, self.value)
+  end)
+end
+
+function Stat:onHold()
+  logger.warn("HOLD")
+  self.hold_callback(self)
+end
+
+function Stat:setValue(value)
+  self.value = value
+  self.value_text:setText(value)
+  UIManager:setDirty(self.show_parent, "partial", self.dimen)
+  self.callback(self.name, self.value)
 end
 
 function Stat:paintTo(bb, x, y)
-
   if self.shadow_color then
     local my_size = self:getSize()
     bb:hatchRect(
@@ -154,8 +240,7 @@ function Stat:paintTo(bb, x, y)
       self.shadow_color
     )
   end
-
-  self[1]:paintTo(bb, x, y)
+  InputContainer.paintTo(self, bb, x, y)
 end
 
 return Stat
