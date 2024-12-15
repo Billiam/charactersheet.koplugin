@@ -38,9 +38,6 @@ local Stat = InputContainer:extend {
 
   value_font_size = 18,
   label_font_size = 14,
-  shadow_color = Blitbuffer.COLOR_GRAY,
-  shadow_x = 5,
-  shadow_y = 5,
 
   invert_label = false,
   margin = 2,
@@ -226,21 +223,6 @@ function Stat:setValue(value)
   self.value_text:setText(value)
   UIManager:setDirty(self.show_parent, "partial", self.dimen)
   self.callback(self.name, self.value)
-end
-
-function Stat:paintTo(bb, x, y)
-  if self.shadow_color then
-    local my_size = self:getSize()
-    bb:hatchRect(
-      x + self.shadow_x + self.margin,
-      y + self.shadow_y + self.margin,
-      my_size.w - self.margin * 2,
-      my_size.h - self.margin * 2,
-      2,
-      self.shadow_color
-    )
-  end
-  InputContainer.paintTo(self, bb, x, y)
 end
 
 return Stat
