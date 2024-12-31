@@ -12,8 +12,8 @@ local Screen = Device.screen
 
 local LegacyTrack = ProgressTrack:extend {
   xp = 0,
-  checkbox_size = Screen:scaleBySize(36),
-  xp_size = Screen:scaleBySize(17),
+  checkbox_size = Screen:scaleBySize(48),
+  xp_size = Screen:scaleBySize(22),
 }
 
 function LegacyTrack:clear()
@@ -52,10 +52,11 @@ function LegacyTrack:init()
 
   self.height = self.checkbox_size + self.xp_size + Screen:scaleBySize(4)
 
-  self.checkboxes = self:buildCheckboxes()
+  self.checkboxes = self:_buildCheckboxes()
   local checkbox_groups = {}
 
   local spacing = self.spacing
+  self._available_width = self.width
 
   if spacing then
     self.width = self.checkbox_size * 10 + 9 * self.spacing
