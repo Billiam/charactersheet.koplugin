@@ -26,7 +26,7 @@ local Stat = InputContainer:extend {
   width = Screen:scaleBySize(50),
 
   label = nil,
-  value = nil,
+  value = 0,
   min = nil,
   max = nil,
 
@@ -69,9 +69,15 @@ function Stat:init()
       padding = 8,
       width = self.width - 4,
       callback = function()
-        self:showSpinner(false, self.secondary_value, self.secondary_min, self.secondary_max, self.secondary_label or (self.label .. " (secondary)"), function(value)
-          self.value = value
-        end)
+        self:showSpinner(
+          false,
+          self.secondary_value,
+          self.secondary_min,
+          self.secondary_max,
+          self.secondary_label or (self.label .. " (secondary)"),
+          function(value)
+            self.value = value
+          end)
       end
     }
   end
