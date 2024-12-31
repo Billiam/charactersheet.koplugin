@@ -132,11 +132,7 @@ function ProgressTrack:init()
 
   self:setDifficulty(self.data.difficulty)
 
-  if spacing then
-    --self.width = self.checkbox_size * 10 + 9 * self.spacing
-  else
-    spacing = (self.width - (self.checkbox_size) * 10) / 9
-  end
+  spacing = spacing or (self.width - (self.checkbox_size) * 10) / 9
 
   self.checkboxes = self:_buildCheckboxes()
   local checkbox_content = {}
