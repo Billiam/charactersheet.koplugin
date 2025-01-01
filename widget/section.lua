@@ -15,6 +15,8 @@ local Section = FrameContainer:extend {
   label_position = "top",
   label_size = 16,
   label_alignment = "center",
+  label_bold = false,
+
   align = "center",
   items = {},
   invert_label = false,
@@ -45,16 +47,17 @@ function Section:init()
     }
   }
 
-  local width = self.width
-  if not width then
-    width = self.content:getSize().w
-  end
-
   local text = TextWidget:new {
     text = self.label,
     fgcolor = self.invert_label and Blitbuffer.COLOR_WHITE or Blitbuffer.COLOR_BLACK,
-    face = Font:getFace("cfont", self.label_size)
+    face = Font:getFace("cfont", self.label_size),
+    bold = self.label_bold
   }
+
+  local width = self.width
+  if not width then
+    width = math.max(self.content:getSize().w, text:getSize().w + self.inner_padding * 2)
+  end
 
   local label = FrameContainer:new {
     bordersize = 0,
