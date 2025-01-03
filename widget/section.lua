@@ -16,12 +16,17 @@ local Section = FrameContainer:extend {
   label_size = 16,
   label_alignment = "center",
   label_bold = false,
+  label_padding = 0,
+  label_radius = 0,
 
+  radius = 0,
+  bordersize = 0,
   align = "center",
   items = {},
   invert_label = false,
+  -- TODO: left/right vs top/bottom padding
   inner_padding = Size.padding.default,
-  margin = 2,
+  margin = 0,
 }
 
 function Section:labelClass()
@@ -54,20 +59,25 @@ function Section:init()
     bold = self.label_bold
   }
 
-  local width = self.width
-  if not width then
-    width = math.max(self.content:getSize().w, text:getSize().w + self.inner_padding * 2)
+  if not self.width then
+    self.width = math.max(self.content:getSize().w, text:getSize().w) + 2 * self.inner_padding + self.bordersize * 2 +
+        self.margin * 2
   end
+
+  text.max_width = self.width
+  self.dimen = Geom:new {
+    w = self.width,
+    h = 150,
+  }
 
   local label = FrameContainer:new {
     bordersize = 0,
-    width = width,
     padding = 0,
-    margin = 0,
+    radius = self.label_radius,
     background = self.invert_label and Blitbuffer.COLOR_BLACK or Blitbuffer.COLOR_WHITE,
     self:labelClass():new {
       dimen = Geom:new {
-        w = width,
+        w = self.width - self.bordersize * 2 + self.label_padding * 2,
         h = text:getSize().h
       },
       text
