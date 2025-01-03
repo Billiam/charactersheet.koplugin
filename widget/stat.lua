@@ -29,6 +29,7 @@ local Stat = InputContainer:extend {
   value = 0,
   min = nil,
   max = nil,
+  radius = 5,
 
   has_secondary_value = false,
   secondary_label = nil, --displayed when editing
@@ -47,6 +48,12 @@ local Stat = InputContainer:extend {
 }
 
 function Stat:init()
+  if self.min then
+    self.value = math.max(self.min, self.value)
+  end
+  if self.max then
+    self.value = math.min(self.max, self.value)
+  end
   self.value_text = TextWidget:new {
     text = self.value,
     face = Font:getFace("cfont", self.value_font_size),
@@ -103,6 +110,7 @@ function Stat:init()
     bordersize = Size.border.thin,
     margin = 0,
     padding = 0,
+    radius = self.radius,
     VerticalGroup:new {
       align = "left",
       FrameContainer:new {
@@ -111,6 +119,8 @@ function Stat:init()
         bordersize = 0,
         background = self.invert_label and Blitbuffer.COLOR_BLACK,
         width = self.width - 4,
+
+        radius = self.radius,
         CenterContainer:new {
           dimen = Geom:new {
             w = self.width - Screen:scaleBySize(4),
@@ -220,7 +230,6 @@ function Stat:onTap()
 end
 
 function Stat:onHold()
-  logger.warn("HOLD")
   self.hold_callback(self)
 end
 
