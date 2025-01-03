@@ -127,7 +127,7 @@ end
 
 function ProgressTrack:init()
   self.checkboxes = {}
-  self.height = self.height or self.checkbox_size + 5 + (self.show_label and 50 or 0)
+  self.height = self.height or self.checkbox_size + 5
   local spacing = self.spacing
 
   self:setDifficulty(self.data.difficulty)
