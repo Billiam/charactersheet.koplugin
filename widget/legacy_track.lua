@@ -30,8 +30,7 @@ function LegacyTrack:xpButton(index, size)
   local checked = self.xp >= index
 
   return FilledCheckbox:new {
-    width = size,
-    height = size - 2,
+    size = size,
     padding = 0,
     checked = checked,
     callback = function()
@@ -96,8 +95,7 @@ function LegacyTrack:init()
   end
   local ten_marked_checkbox
   ten_marked_checkbox = FilledCheckbox:new {
-    width = self.xp_size,
-    height = self.xp_size - 2,
+    size = self.xp_size,
     padding = 0,
     checked = self.ten_marked,
     callback = function()

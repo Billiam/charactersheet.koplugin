@@ -30,7 +30,7 @@ function Checklist:init()
       name = v.name,
       text = v.label,
       font_size = self.label_size,
-      width = self.checkbox_size,
+      size = self.checkbox_size,
       margin = 5,
       checked = self.value[v.name],
       callback = callback,
