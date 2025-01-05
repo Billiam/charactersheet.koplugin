@@ -15,6 +15,7 @@ local VerticalSpan = require("ui/widget/verticalspan")
 
 local TopContainer = require("ui/widget/container/topcontainer")
 
+local Flex = require("widget/flex")
 local InputButton = require("widget/input_button")
 
 local Screen = Device.screen
@@ -128,35 +129,26 @@ end
 function ProgressTrack:init()
   self.checkboxes = {}
   self.height = self.height or self.checkbox_size + 5
-  local spacing = self.spacing
 
   self:setDifficulty(self.data.difficulty)
-
-  spacing = spacing or (self.width - (self.checkbox_size) * 10) / 9
 
   self.checkboxes = self:_buildCheckboxes()
   local checkbox_content = {}
 
   for i = 1, 10 do
-    table.insert(checkbox_content, self.checkboxes[i])
-    if i < 10 then
-      table.insert(checkbox_content, HorizontalSpan:new { width = spacing })
-    end
+    checkbox_content[i] = self.checkboxes[i]
   end
-  local CenterContainer = require("ui/widget/container/centercontainer")
 
   local vgroup_contents = {
-    CenterContainer:new {
-      dimen = Geom:new {
-        w = self.width,
-        h = self.checkbox_size
-      },
-      HorizontalGroup:new {
-        table.unpack(checkbox_content)
-      }
-    }
+    Flex:new {
+      width = self.width,
+      justify_content = Flex.CENTER,
+      gap = self.spacing,
+      children = checkbox_content,
+    },
   }
 
+  -- TODO: Separate vow and difficulty visibility
   if self.show_label then
     local input_width = self.width
 
@@ -166,29 +158,35 @@ function ProgressTrack:init()
         text_font_size = 16,
         bordersize = 0,
         text = "Troublesome",
+        margin = 0,
         callback = function()
           self:showDifficultySelect()
         end
       }
       self.difficulty_button:setText(self.data.difficulty, self.difficulty_button:getSize().w)
-      input_width = input_width - self.difficulty_button.width - 5
+
+
+      input_width = input_width - self.difficulty_button.width --- Screen:scaleBySize(5)
     end
 
-    local label_group = HorizontalGroup:new {
-      InputButton:new {
-        input = "",
-        hint = "Vow",
-        width = input_width,
-        parent = self,
-        underline_size = 1,
-        name = "description",
-        callback = function(name, value)
-          self.data[name] = value
-          self:updateValue()
-        end,
-      },
-      self.difficulty_button
+    local label_group = Flex:new {
+      children = {
+        InputButton:new {
+          input = "",
+          hint = "Vow",
+          width = input_width,
+          parent = self,
+          underline_size = 1,
+          name = "description",
+          callback = function(name, value)
+            self.data[name] = value
+            self:updateValue()
+          end,
+        },
+        self.difficulty_button
+      }
     }
+
     table.insert(vgroup_contents, 1, label_group)
     table.insert(vgroup_contents, 2, VerticalSpan:new {
       width = Screen:scaleBySize(5)
