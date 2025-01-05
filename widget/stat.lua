@@ -217,8 +217,10 @@ function Stat:onSwipe(_, ges)
   local direction = ges.direction
   if direction == "north" then
     self:increment()
+    return true
   elseif direction == "south" then
     self:decrement()
+    return true
   end
 end
 
