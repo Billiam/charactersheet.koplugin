@@ -18,7 +18,7 @@ local InputButton = WidgetContainer:extend {
   underline_size = Size.line.thin,
   width = Screen:scaleBySize(50),
   bordersize = 0,
-  margin = 5,
+  margin = 0,
 
   font_size = 16,
 
