@@ -63,4 +63,8 @@ function FilledCheckbox:onTap()
   end
 end
 
+function FilledCheckbox:updateValue(value)
+  self:setChecked(value)
+end
+
 return FilledCheckbox

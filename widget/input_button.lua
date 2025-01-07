@@ -10,6 +10,7 @@ local FrameContainer = require("ui/widget/container/framecontainer")
 local Device = require("device")
 local Screen = Device.screen
 
+-- TODO use tap_input instead of manual callback
 local InputButton = WidgetContainer:extend {
   value = nil,
   color = Blitbuffer.COLOR_BLACK,
@@ -30,8 +31,8 @@ local InputButton = WidgetContainer:extend {
 }
 
 function InputButton:init()
-  local show_hint = self.input == nil or self.input == ""
-  local text_value = show_hint and self.hint or self.input or ""
+  local show_hint = self.value == nil or self.value == ""
+  local text_value = show_hint and self.hint or self.value or ""
 
   self.button = Button:new {
     bordersize = self.bordersize,
@@ -47,11 +48,14 @@ function InputButton:init()
       local dialog
       dialog = InputDialog:new {
         title = self.label,
-        input = self.input,
+        input = self.value,
         input_hint = self.hint,
         save_callback = function(value)
           UIManager:close(dialog)
           self:setValue(value, true)
+
+          self.callback(self.name, value)
+
           return false, false
         end
       }
@@ -79,8 +83,11 @@ function InputButton:init()
 end
 
 function InputButton:setValue(text, refresh)
-  self.input = text
-  self.callback(self.name, text)
+  if text == self.value then
+    return
+  end
+
+  self.value = text
 
   if text and text ~= "" then
     self.button:setText(text, self.button.width)
@@ -93,6 +100,10 @@ function InputButton:setValue(text, refresh)
   if refresh then
     self.button:refresh()
   end
+end
+
+function InputButton:updateValue(value)
+  self:setValue(value, true)
 end
 
 return InputButton

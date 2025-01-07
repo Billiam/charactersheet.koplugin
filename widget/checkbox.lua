@@ -80,13 +80,27 @@ function Checkbox:onTap()
     return
   end
 
-  self.checked = not self.checked
+  self:setChecked(not self.checked)
+
   if self.callback then
     self.callback(self.name, self.checked)
   end
+end
+
+function Checkbox:setChecked(checked)
+  if self.checked == checked then
+    return
+  end
+
+  self.checked = checked
+
   self.checkmark.background = self.checked and Blitbuffer.COLOR_BLACK or Blitbuffer.COLOR_WHITE
 
   UIManager:setDirty(self.show_parent, "ui", self[1].dimen)
+end
+
+function Checkbox:updateValue(value)
+  self:setChecked(value)
 end
 
 return Checkbox

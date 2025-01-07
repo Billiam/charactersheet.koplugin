@@ -17,6 +17,7 @@ local Checklist = WidgetContainer:extend {
 function Checklist:init()
   local elements = {}
   self.value = self.value or {}
+  self.checkboxes = {}
 
   local callback = function(name, value)
     self.value[name] = value
@@ -36,6 +37,7 @@ function Checklist:init()
       callback = callback,
       show_parent = self.show_parent,
     }
+    table.insert(self.checkboxes, checkbox)
     table.insert(elements, checkbox)
     if i < option_count then
       table.insert(elements, VerticalSpan:new { width = 2 })
@@ -50,6 +52,13 @@ function Checklist:init()
   }
 
   self[1] = container
+end
+
+function Checklist:updateValue(value)
+  self.value = value
+  for _, checkbox in ipairs(self.checkboxes) do
+    checkbox:updateValue(value[checkbox.name])
+  end
 end
 
 return Checklist

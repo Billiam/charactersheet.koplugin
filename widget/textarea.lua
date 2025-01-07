@@ -8,12 +8,14 @@ local Textarea = ScrollTextWidget:extend {
 }
 
 function Textarea:setValue(text)
+  if self.text == text then
+    return
+  end
+
   self.text_widget:setText(text)
   self:updateScrollBar()
   self.text = text
   self:scrollToTop()
-
-  self.callback(self.name, text)
 end
 
 function Textarea:onTapScrollText(arg, ges)
@@ -26,6 +28,8 @@ function Textarea:onTapScrollText(arg, ges)
     save_callback = function(value)
       UIManager:close(dialog)
       self:setValue(value)
+      self.callback(self.name, value)
+
       -- fix scroll after update
       return false, false
     end
@@ -33,6 +37,10 @@ function Textarea:onTapScrollText(arg, ges)
   UIManager:show(dialog)
   dialog:onShowKeyboard()
   return true
+end
+
+function Textarea:updateValue(value)
+  self:setValue(value)
 end
 
 return Textarea
