@@ -1,0 +1,527 @@
+{
+  "name": "Starforged",
+  "defaults": {},
+  "pages": [
+    {
+      "type": "VerticalGroup",
+      "align": "left",
+      "children": [
+        {
+          "type": "HorizontalGroup",
+          "align": "top",
+          "children": [
+            {
+              "type": "VerticalGroup",
+              "children": [
+                {
+                  "type": "Input",
+                  "input_type": "TextInput",
+                  "hint": "Name",
+                  "name": "name",
+                  "width": "35%",
+                  "underline_size": 1,
+                  "margin": 0
+                },
+                {
+                  "type": "Input",
+                  "input_type": "TextInput",
+                  "hint": "Pronouns",
+                  "name": "pronouns",
+                  "width": "35%",
+                  "underline_size": 1,
+                  "margin": 0
+                },
+                {
+                  "type": "Input",
+                  "input_type": "TextInput",
+                  "hint": "Callsign",
+                  "name": "callsign",
+                  "width": "35%",
+                  "underline_size": 1,
+                  "margin": 0
+                }
+              ]
+            },
+            {
+              "type": "HorizontalSpan",
+              "width": "3%"
+            },
+            {
+              "type": "VerticalGroup",
+              "align": "left",
+              "children": [
+                {
+                  "type": "Input",
+                  "input_type": "Textarea",
+                  "hint": "Characteristics",
+                  "name": "characteristics",
+                  "margin": 0,
+                  "width": "35%",
+                  "height": 100
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FlexContainer",
+          "width": "100%",
+          "justify_content": "space-between",
+          "children": [
+            {
+              "type": "ShadowContainer",
+              "padding": 0,
+              "bordersize": 0,
+              "radius": 5,
+              "children": [
+                {
+                  "type": "Input",
+                  "input_type": "Stat",
+                  "label": "Edge",
+                  "name": "edge",
+                  "margin": 0,
+                  "min": 1,
+                  "max": 4,
+                  "width": "19.2%"
+                }
+              ]
+            },
+            {
+              "type": "ShadowContainer",
+              "padding": 0,
+              "bordersize": 0,
+              "radius": 5,
+              "children": [
+                {
+                  "type": "Input",
+                  "input_type": "Stat",
+                  "label": "Heart",
+                  "name": "heart",
+                  "margin": 0,
+                  "min": 1,
+                  "max": 4,
+                  "width": "19.2%"
+                }
+              ]
+            },
+            {
+              "type": "ShadowContainer",
+              "padding": 0,
+              "bordersize": 0,
+              "radius": 5,
+              "children": [
+                {
+                  "type": "Input",
+                  "input_type": "Stat",
+                  "label": "Iron",
+                  "name": "iron",
+                  "margin": 0,
+                  "min": 1,
+                  "max": 4,
+                  "width": "19.2%"
+                }
+              ]
+            },
+            {
+              "type": "ShadowContainer",
+              "padding": 0,
+              "bordersize": 0,
+              "radius": 5,
+              "children": [
+                {
+                  "type": "Input",
+                  "input_type": "Stat",
+                  "label": "Shadow",
+                  "name": "shadow",
+                  "margin": 0,
+                  "min": 1,
+                  "max": 4,
+                  "width": "19.2%"
+                }
+              ]
+            },
+            {
+              "type": "ShadowContainer",
+              "padding": 0,
+              "bordersize": 0,
+              "radius": 5,
+              "children": [
+                {
+                  "type": "Input",
+                  "input_type": "Stat",
+                  "label": "Wits",
+                  "name": "wits",
+                  "margin": 0,
+                  "min": 1,
+                  "max": 4,
+                  "width": "19.2%"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "VerticalSpan",
+          "width": 10
+        },
+        {
+          "type": "FlexContainer",
+          "width": "100%",
+          "justify_content": "space-between",
+          "children": [
+            {
+              "type": "ShadowContainer",
+              "padding": 0,
+              "bordersize": 0,
+              "radius": 5,
+              "children": [
+                {
+                  "type": "Input",
+                  "input_type": "Stat",
+                  "label": "Health",
+                  "name": "health",
+                  "margin": 0,
+                  "min": 0,
+                  "max": 5,
+                  "width": "15.833%"
+                }
+              ]
+            },
+            {
+              "type": "ShadowContainer",
+              "padding": 0,
+              "bordersize": 0,
+              "radius": 5,
+              "children": [
+                {
+                  "type": "Input",
+                  "input_type": "Stat",
+                  "label": "Spirit",
+                  "name": "spirit",
+                  "margin": 0,
+                  "min": 0,
+                  "max": 5,
+                  "width": "15.833%"
+                }
+              ]
+            },
+            {
+              "type": "ShadowContainer",
+              "padding": 0,
+              "bordersize": 0,
+              "radius": 5,
+              "children": [
+                {
+                  "type": "Input",
+                  "input_type": "Stat",
+                  "label": "Supply",
+                  "name": "supply",
+                  "margin": 0,
+                  "min": 0,
+                  "max": 5,
+                  "width": "15.833%"
+                }
+              ]
+            },
+            {
+              "type": "ShadowContainer",
+              "padding": 0,
+              "bordersize": 0,
+              "radius": 5,
+              "children": [
+                {
+                  "type": "Input",
+                  "input_type": "Stat",
+                  "label": "Momentum",
+                  "name": "momentum",
+                  "margin": 0,
+                  "min": -6,
+                  "max": 10,
+                  "width": "15.833%"
+                }
+              ]
+            },
+            {
+              "type": "ShadowContainer",
+              "padding": 0,
+              "bordersize": 0,
+              "radius": 5,
+              "children": [
+                {
+                  "type": "Input",
+                  "input_type": "Stat",
+                  "label": "Max",
+                  "name": "momentum_max",
+                  "margin": 0,
+                  "min": -6,
+                  "max": 10,
+                  "width": "15.833%"
+                }
+              ]
+            },
+            {
+              "type": "ShadowContainer",
+              "padding": 0,
+              "bordersize": 0,
+              "radius": 5,
+              "children": [
+                {
+                  "type": "Input",
+                  "input_type": "Stat",
+                  "label": "Reset",
+                  "name": "momentum_reset",
+                  "margin": 0,
+                  "min": 0,
+                  "max": 2,
+                  "width": "15.833%"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "VerticalSpan",
+          "width": 10
+        },
+        {
+          "type": "Divider",
+          "label": "Legacies",
+          "width": "100%"
+        },
+        {
+          "type": "Section",
+          "label": "Quests",
+          "width": "100%",
+          "bordersize": 0,
+          "inner_padding": 0,
+          "children": [
+            {
+              "type": "Input",
+              "input_type": "LegacyTrack",
+              "name": "quests",
+              "spacing": 10,
+              "width": "100%"
+            }
+          ]
+        },
+        {
+          "type": "Section",
+          "label": "Bonds",
+          "width": "100%",
+          "bordersize": 0,
+          "inner_padding": 0,
+          "children": [
+            {
+              "type": "Input",
+              "input_type": "LegacyTrack",
+              "name": "bonds",
+              "spacing": 10,
+              "width": "100%"
+            }
+          ]
+        },
+        {
+          "type": "Section",
+          "label": "Discoveries",
+          "width": "100%",
+          "bordersize": 0,
+          "inner_padding": 0,
+          "children": [
+            {
+              "type": "Input",
+              "input_type": "LegacyTrack",
+              "name": "discoveries",
+              "spacing": 10,
+              "width": "100%"
+            }
+          ]
+        },
+        {
+          "type": "VerticalSpan",
+          "width": 10
+        },
+        {
+          "type": "Divider",
+          "label": "Background Vow",
+          "width": "100%"
+        },
+        {
+          "type": "Input",
+          "input_type": "ProgressTrack",
+          "name": "background_vow_progress",
+          "show_difficulty": false,
+          "spacing": 10,
+          "width": "100%"
+        },
+        {
+          "type": "VerticalSpan",
+          "width": 10
+        },
+        {
+          "type": "Divider",
+          "label": "Impacts",
+          "width": "100%"
+        },
+        {
+          "type": "FlexContainer",
+          "width": "100%",
+          "justify_content": "space-between",
+          "children": [
+            {
+              "type": "Section",
+              "align": "left",
+              "label": "Misfortunes",
+              "invert_label": true,
+              "label_radius": 10,
+              "label_size": 14,
+              "children": [
+                {
+                  "type": "Input",
+                  "input_type": "Checklist",
+                  "name": "misfortunes",
+                  "checkbox_size": 15,
+                  "font_size": 14,
+                  "options": [
+                    {
+                      "name": "wounded",
+                      "label": "Wounded"
+                    },
+                    {
+                      "name": "shaken",
+                      "label": "Shaken"
+                    },
+                    {
+                      "name": "unprepared",
+                      "label": "Unprepared"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "Section",
+              "align": "left",
+              "label": "Lasting Effects",
+              "invert_label": true,
+              "label_radius": 10,
+              "label_size": 14,
+              "children": [
+                {
+                  "type": "Input",
+                  "input_type": "Checklist",
+                  "name": "lasting_effects",
+                  "checkbox_size": 15,
+                  "font_size": 14,
+                  "options": [
+                    {
+                      "name": "permanently_harmed",
+                      "label": "Permanently Harmed"
+                    },
+                    {
+                      "name": "traumatized",
+                      "label": "Traumatized"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "Section",
+              "align": "left",
+              "label": "Burdens",
+              "invert_label": true,
+              "label_radius": 10,
+              "label_size": 14,
+              "children": [
+                {
+                  "type": "Input",
+                  "input_type": "Checklist",
+                  "name": "burdens",
+                  "checkbox_size": 15,
+                  "font_size": 14,
+                  "options": [
+                    {
+                      "name": "doomed",
+                      "label": "Doomed"
+                    },
+                    {
+                      "name": "tormented",
+                      "label": "Tormented"
+                    },
+                    {
+                      "name": "indebted",
+                      "label": "Indebted"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "Section",
+              "align": "left",
+              "label": "Current Vehicle",
+              "invert_label": true,
+              "label_radius": 10,
+              "label_size": 14,
+              "children": [
+                {
+                  "type": "Input",
+                  "input_type": "Checklist",
+                  "name": "vehicle",
+                  "checkbox_size": 15,
+                  "font_size": 14,
+                  "options": [
+                    {
+                      "name": "battered",
+                      "label": "Battered"
+                    },
+                    {
+                      "name": "cursed",
+                      "label": "Cursed"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FlexContainer",
+          "width": "100%",
+          "align_items": "center",
+          "justify_content": "space-between",
+          "children": [
+            {
+              "type": "Text",
+              "text": "Other impacts: "
+            },
+            {
+              "type": "Input",
+              "input_type": "FilledCheckbox",
+              "name": "other_impact_1_active",
+              "size": 15
+            },
+            {
+              "type": "Input",
+              "input_type": "TextInput",
+              "name": "other_impact_1",
+              "width": "35%"
+            },
+            {
+              "type": "Input",
+              "input_type": "FilledCheckbox",
+              "name": "other_impact_2_active",
+              "size": 15
+            },
+            {
+              "type": "Input",
+              "input_type": "TextInput",
+              "name": "other_impact_2",
+              "width": "35%"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
