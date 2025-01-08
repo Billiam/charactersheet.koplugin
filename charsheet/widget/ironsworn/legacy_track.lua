@@ -3,31 +3,30 @@ local HorizontalGroup = require("ui/widget/horizontalgroup")
 local _ = require("gettext")
 local logger = require("logger")
 local HorizontalSpan = require("ui/widget/horizontalspan")
-local ProgressTrack = require("widget/progress_track")
+local ProgressTrack = require("charsheet/widget/ironsworn/progress_track")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local VerticalSpan = require("ui/widget/verticalspan")
 local TextWidget = require("ui/widget/textwidget")
 local Font = require("ui/font")
 
-local Flex = require("widget/flex")
-local FilledCheckbox = require("widget/filled_checkbox")
+local _t = require("charsheet/lib/table_util")
+local FlexContainer = require("charsheet/widget/flex_container")
+local FilledCheckbox = require("charsheet/widget/filled_checkbox")
 
 local Screen = Device.screen
 
 local LegacyTrack = ProgressTrack:extend {
-  xp = 0,
-  ten_marked = false,
-  checkbox_size = Screen:scaleBySize(48),
-  xp_size = Screen:scaleBySize(22),
+  checkbox_size = Screen:scaleBySize(44),
+  xp_size = Screen:scaleBySize(21),
 }
 
 function LegacyTrack:clear()
-  self.xp = 0
+  self.value.xp = 0
   ProgressTrack.clear(self)
 end
 
 function LegacyTrack:xpButton(index, size)
-  local checked = self.xp >= index
+  local checked = self.value.xp >= index
 
   return FilledCheckbox:new {
     size = size,
@@ -40,20 +39,27 @@ function LegacyTrack:xpButton(index, size)
 end
 
 function LegacyTrack:xpCallback(index)
-  if self.xp >= index then
-    self.xp = index - 1
+  if self.value.xp >= index then
+    self.value.xp = index - 1
   else
-    self.xp = index
+    self.value.xp = index
   end
   self:updateXp()
+  self:onUpdateValue()
 end
 
-function LegacyTrack:markTen()
-  self.ten_marked = not self.ten_marked
-  self:updateValue()
+function LegacyTrack:markTen(value)
+  self.value.ten_marked = value
+  self.ten_marked_checkbox:setChecked(self.value.ten_marked)
 end
 
 function LegacyTrack:init()
+  self.value = {
+    value = 0,
+    xp = 0,
+    ten_marked = false,
+  }
+
   self.increment_value = 1
 
   self.checkboxes = {}
@@ -93,67 +99,72 @@ function LegacyTrack:init()
       xp_block,
     })
   end
-  local ten_marked_checkbox
-  ten_marked_checkbox = FilledCheckbox:new {
+  self.ten_marked_checkbox = FilledCheckbox:new {
     size = self.xp_size,
     padding = 0,
-    checked = self.ten_marked,
+    checked = self.value.ten_marked,
     callback = function()
-      self:markTen()
-      ten_marked_checkbox:setChecked(self.ten_marked)
+      self:markTen(not self.value.ten_marked)
+      self:onUpdateValue()
     end
   }
 
-  table.insert(checkbox_groups, Flex:new {
-    direction = Flex.VERTICAL,
-    justify_content = Flex.SPACE_BETWEEN,
+  table.insert(checkbox_groups, FlexContainer:new {
+    direction = FlexContainer.VERTICAL,
+    justify_content = FlexContainer.SPACE_BETWEEN,
     children = {
       TextWidget:new {
         text = "10",
         face = Font:getFace("cfont", 16),
         bold = true,
       },
-      ten_marked_checkbox
+      self.ten_marked_checkbox
     }
   })
 
-  local justify_content = Flex.CENTER
+  local justify_content = FlexContainer.CENTER
   local gap
   if self.spacing then
     gap = self.spacing
   else
-    justify_content = Flex.SPACE_BETWEEN
+    justify_content = FlexContainer.SPACE_BETWEEN
   end
 
-  self[1] = Flex:new {
+  self[1] = FlexContainer:new {
     gap = gap,
     width = self._available_width,
     justify_content = justify_content,
-    align_items = Flex.STRETCH,
+    align_items = FlexContainer.STRETCH,
     children = checkbox_groups,
   }
 end
 
 function LegacyTrack:updateXp()
   for i = 1, 20 do
-    local checked = self.xp >= i
+    local checked = self.value.xp >= i
     self.xp_boxes[i]:setChecked(checked)
   end
-  self:updateValue()
 end
 
-function LegacyTrack:selectXp(i)
-  if self.xp == i then
-    self.xp = i - 1
-  else
-    self.xp = i
+function LegacyTrack:onUpdateValue()
+  self.callback(self.name, self.value)
+end
+
+function LegacyTrack:updateValue(value)
+  local previous_value = self.value
+  self.value = _t.clone(value)
+  local changed = false
+  if self.value.xp ~= previous_value.xp then
+    changed = true
+    self:updateXp()
   end
-
-  self:updateXp()
-end
-
-function LegacyTrack:updateValue()
-  self.callback(self.name, { xp = self.xp, value = self.value, ten_marked = self.ten_marked })
+  if self.value.ten_marked ~= previous_value.ten_marked then
+    changed = true
+    self:markTen(value.ten_marked)
+  end
+  if changed or self.value.value ~= previous_value.value then
+    self:update()
+  end
 end
 
 return LegacyTrack

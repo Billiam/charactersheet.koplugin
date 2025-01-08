@@ -1,6 +1,6 @@
 local Size = require("ui/size")
 local UnderlineContainer = require("ui/widget/container/underlinecontainer")
-local Button = require("widget/button")
+local Button = require("charsheet/widget/button")
 local InputDialog = require("ui/widget/inputdialog")
 local UIManager = require("ui/uimanager")
 local Blitbuffer = require("ffi/blitbuffer")
@@ -65,7 +65,7 @@ function InputButton:init()
   }
 
   if show_hint then
-    self.button.label_widget.fgcolor = Blitbuffer.COLOR_GRAY_5
+    self.button.label_widget.fgcolor = Blitbuffer.COLOR_GRAY
   end
 
   self[1] = FrameContainer:new {

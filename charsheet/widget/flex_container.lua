@@ -21,7 +21,7 @@ RightContainer.id = "rightcontainer"
 TopContainer.id = "topcontainer"
 BottomContainer.id = "bottomcontainer"
 
-local Flex = WidgetContainer:extend {
+local FlexContainer = WidgetContainer:extend {
   direction = "horizontal",
   children = nil,
   align_items = "flex-start",
@@ -32,13 +32,13 @@ local Flex = WidgetContainer:extend {
   gap = nil,
 }
 
-Flex.SPACE_BETWEEN = "space-between"
-Flex.FLEX_START = "flex-start"
-Flex.FLEX_END = "flex-end"
-Flex.STRETCH = "stretch"
-Flex.HORIZONTAL = "horizontal"
-Flex.VERTICAL = "vertical"
-Flex.CENTER = "center"
+FlexContainer.SPACE_BETWEEN = "space-between"
+FlexContainer.FLEX_START = "flex-start"
+FlexContainer.FLEX_END = "flex-end"
+FlexContainer.STRETCH = "stretch"
+FlexContainer.HORIZONTAL = "horizontal"
+FlexContainer.VERTICAL = "vertical"
+FlexContainer.CENTER = "center"
 
 local long_dimension = {
   h = "height",
@@ -68,7 +68,7 @@ local vertical = {
   align_end = "right",
 }
 
-function Flex:init()
+function FlexContainer:init()
   local container_align
   local children_count = #self.children
   self.spans = {}
@@ -79,9 +79,9 @@ function Flex:init()
   }
   local dir = self:dir()
 
-  if self.align_items == Flex.STRETCH or self.align_items == Flex.FLEX_START then
+  if self.align_items == FlexContainer.STRETCH or self.align_items == FlexContainer.FLEX_START then
     container_align = dir.align_start
-  elseif self.align_items == Flex.FLEX_END then
+  elseif self.align_items == FlexContainer.FLEX_END then
     container_align = dir.align_end
   end
 
@@ -95,7 +95,7 @@ function Flex:init()
   end
 
   if not gap then
-    if children_count > 1 and self.justify_content == Flex.SPACE_BETWEEN and size[dir.flex_dimension] then
+    if children_count > 1 and self.justify_content == FlexContainer.SPACE_BETWEEN and size[dir.flex_dimension] then
       gap = (size[dir.flex_dimension] - self.total_flex) / (children_count - 1)
     else
       gap = 0
@@ -107,13 +107,13 @@ function Flex:init()
     for i, child in ipairs(self.children) do
       table.insert(elements, child)
 
-      if self.align_items == Flex.STRETCH then
+      if self.align_items == FlexContainer.STRETCH then
         local long_flex_key = long_dimension[dir.align_dimension]
         local original_value = child[long_flex_key]
         child[long_flex_key] = max_align
 
-        if original_value ~= max_align and child.updateFlex then
-          child:updateFlex(long_flex_key)
+        if original_value ~= max_align and child.updateFlexContainer then
+          child:updateFlexContainer(long_flex_key)
         end
       end
 
@@ -129,9 +129,9 @@ function Flex:init()
   end
 
   local wrapper_class
-  if self.justify_content == Flex.FLEX_START or self.justify_content == Flex.SPACE_BETWEEN then
+  if self.justify_content == FlexContainer.FLEX_START or self.justify_content == FlexContainer.SPACE_BETWEEN then
     wrapper_class = dir.flex_start_class
-  elseif self.justify_content == Flex.FLEX_END then
+  elseif self.justify_content == FlexContainer.FLEX_END then
     wrapper_class = dir.flex_end_class
   else
     wrapper_class = CenterContainer
@@ -152,11 +152,11 @@ function Flex:init()
   }
 end
 
-function Flex:updateFlex(changed_dimension)
+function FlexContainer:updateFlexContainer(changed_dimension)
   local dir = self:dir()
   self.container:resetLayout()
 
-  if self.justify_content == Flex.SPACE_BETWEEN and long_dimension[dir.flex_dimension] == changed_dimension then
+  if self.justify_content == FlexContainer.SPACE_BETWEEN and long_dimension[dir.flex_dimension] == changed_dimension then
     if self[changed_dimension] then
       local new_gap = (self[changed_dimension] - self.total_flex) / (#self.children - 1)
 
@@ -167,8 +167,8 @@ function Flex:updateFlex(changed_dimension)
   end
 end
 
-function Flex:dir()
-  return self.direction == Flex.HORIZONTAL and horizontal or vertical
+function FlexContainer:dir()
+  return self.direction == FlexContainer.HORIZONTAL and horizontal or vertical
 end
 
-return Flex
+return FlexContainer

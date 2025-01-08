@@ -3,13 +3,13 @@ local HorizontalGroup = require("ui/widget/horizontalgroup")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local VerticalSpan = require("ui/widget/verticalspan")
 
-local Checkbox = require("widget/checkbox")
+local Checkbox = require("charsheet/widget/checkbox")
 
 local Checklist = WidgetContainer:extend {
   options = {},
   value = nil,
   horizontal = false,
-  label_size = 16,
+  font_size = 16,
 
   checkbox_size = 20
 }
@@ -30,7 +30,7 @@ function Checklist:init()
     local checkbox = Checkbox:new {
       name = v.name,
       text = v.label,
-      font_size = self.label_size,
+      font_size = self.font_size,
       size = self.checkbox_size,
       margin = 5,
       checked = self.value[v.name],

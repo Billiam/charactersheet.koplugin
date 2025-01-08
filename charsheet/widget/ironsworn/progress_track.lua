@@ -2,24 +2,22 @@ local Device = require("device")
 local _ = require("gettext")
 local logger = require("logger")
 
-local Geom = require("ui/geometry")
 local UIManager = require("ui/uimanager")
 
 local Button = require("ui/widget/button")
-local HorizontalGroup = require("ui/widget/horizontalgroup")
-local HorizontalSpan = require("ui/widget/horizontalspan")
 local ButtonDialog = require("ui/widget/buttondialog")
-local ProgressCheckbox = require("widget/progress_checkbox")
+local ProgressCheckbox = require("charsheet/widget/ironsworn/progress_checkbox")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local VerticalSpan = require("ui/widget/verticalspan")
 
 local TopContainer = require("ui/widget/container/topcontainer")
 
-local Flex = require("widget/flex")
-local InputButton = require("widget/input_button")
+local _t = require("charsheet/lib/table_util")
+local FlexContainer = require("charsheet/widget/flex_container")
+local InputButton = require("charsheet/widget/input_button")
 
 local Screen = Device.screen
-
+logger.warn("DOTS", ...)
 local DIFFICULTIES = {
   Troublesome = 12,
   Dangerous = 8,
@@ -48,33 +46,35 @@ local ProgressTrack = TopContainer:extend {
   name = nil,
 
   _increment_value = 1,
-
-  data = {
-    difficulty = "Epic",
-    description = "",
-    value = 0
-  }
+  value = nil,
 }
 
 function ProgressTrack:getSize()
+  if not self.width or not self.height then
+    local size = self[1]:getSize()
+
+    self.width = self.width or size.w
+    self.height = self.height or size.h
+  end
+
   return { w = self.width, h = self.height }
 end
 
 function ProgressTrack:decrement()
-  self.data.value = math.max(0, self.data.value - self._increment_value)
+  self.value.value = math.max(0, self.value.value - self._increment_value)
 end
 
 function ProgressTrack:increment()
-  self.data.value = math.min(40, self.data.value + self._increment_value)
+  self.value.value = math.min(40, self.value.value + self._increment_value)
 end
 
 function ProgressTrack:clear()
-  self.data.value = 0
+  self.value.value = 0
   self:update()
 end
 
 function ProgressTrack:update()
-  local total = self.data.value
+  local total = self.value.value
   for i = 1, 10 do
     local value = math.min(4, total)
     total = total - value
@@ -83,23 +83,23 @@ function ProgressTrack:update()
       self.checkboxes[i]:update()
     end
   end
-
-  self:updateValue()
 end
 
-function ProgressTrack:updateValue()
-  self.callback(self.name, self.data)
+function ProgressTrack:onUpdateValue()
+  self.callback(self.name, self.value)
 end
 
 function ProgressTrack:setDifficulty(difficulty)
-  self.data.difficulty = difficulty
+  self.value.difficulty = difficulty
   self._increment_value = DIFFICULTIES[difficulty]
 end
 
 function ProgressTrack:updateDifficulty(difficulty)
+  logger.warn("Updating difficulty to", difficulty)
   self:setDifficulty(difficulty)
   if self.show_difficulty then
-    self.difficulty_button:setText(self.data.difficulty, self.difficulty_button:getSize().w)
+    logger.warn("Showing difficulty")
+    self.difficulty_button:setText(difficulty, self.difficulty_button:getSize().w)
     UIManager:setDirty(self.show_parent, "ui", self.difficulty_button.dimen)
   end
 end
@@ -108,12 +108,13 @@ function ProgressTrack:showDifficultySelect()
   local dialog
   local buttons = {}
   for _, key in ipairs(DIFFICULTY_ORDER) do
-    local active = self.data.difficulty == key
+    local active = self.value.difficulty == key
 
     local button = {
       text = key .. (active and " ★" or ""),
       callback = function()
         self:updateDifficulty(key)
+        self:onUpdateValue()
         UIManager:close(dialog)
       end
     }
@@ -127,10 +128,15 @@ function ProgressTrack:showDifficultySelect()
 end
 
 function ProgressTrack:init()
+  self.value = {
+    difficulty = "Epic",
+    description = "",
+    value = 0
+  }
   self.checkboxes = {}
   self.height = self.height or self.checkbox_size + 5
 
-  self:setDifficulty(self.data.difficulty)
+  self:setDifficulty(self.value.difficulty)
 
   self.checkboxes = self:_buildCheckboxes()
   local checkbox_content = {}
@@ -140,16 +146,19 @@ function ProgressTrack:init()
   end
 
   local vgroup_contents = {
-    Flex:new {
+    FlexContainer:new {
       width = self.width,
-      justify_content = Flex.CENTER,
+      justify_content = FlexContainer.CENTER,
       gap = self.spacing,
       children = checkbox_content,
     },
   }
+  if not self.width then
+    self.width = vgroup_contents[1]:getSize().w
+  end
 
-  -- TODO: Separate vow and difficulty visibility
-  if self.show_label then
+  if self.show_label or self.show_difficulty then
+    local label_flex_children = {}
     local input_width = self.width
 
     if self.show_difficulty then
@@ -163,28 +172,30 @@ function ProgressTrack:init()
           self:showDifficultySelect()
         end
       }
-      self.difficulty_button:setText(self.data.difficulty, self.difficulty_button:getSize().w)
-
+      self.difficulty_button:setText(self.value.difficulty, self.difficulty_button:getSize().w)
 
       input_width = input_width - self.difficulty_button.width --- Screen:scaleBySize(5)
+      label_flex_children[self.show_label and 2 or 1] = self.difficulty_button
     end
 
-    local label_group = Flex:new {
-      children = {
-        InputButton:new {
-          input = "",
-          hint = "Vow",
-          width = input_width,
-          parent = self,
-          underline_size = 1,
-          name = "description",
-          callback = function(name, value)
-            self.data[name] = value
-            self:updateValue()
-          end,
-        },
-        self.difficulty_button
+    if self.show_label then
+      self.description = InputButton:new {
+        input = "",
+        hint = "Vow",
+        width = input_width,
+        parent = self,
+        underline_size = 1,
+        name = "description",
+        callback = function(name, value)
+          self.value[name] = value
+          self:onUpdateValue()
+        end,
       }
+      label_flex_children[1] = self.description
+    end
+
+    local label_group = FlexContainer:new {
+      children = label_flex_children
     }
 
     table.insert(vgroup_contents, 1, label_group)
@@ -202,7 +213,7 @@ function ProgressTrack:init()
 end
 
 function ProgressTrack:_buildCheckboxes()
-  local total = self.data.value
+  local total = self.value.value
   local checkboxes = {}
 
   for i = 1, 10 do
@@ -224,7 +235,7 @@ function ProgressTrack:_buildCheckboxes()
 end
 
 function ProgressTrack:updateCheckboxDifficulty()
-  self.data.value = math.floor(self.data.value / self._increment_value) * self._increment_value
+  self.value.value = math.floor(self.value.value / self._increment_value) * self._increment_value
   self:update()
 end
 
@@ -236,8 +247,29 @@ function ProgressTrack:selectCheckbox(i)
     next_value = math.floor((i - 1) * 4 / self._increment_value) * self._increment_value
   end
 
-  self.data.value = next_value
+  self.value.value = next_value
   self:update()
+  self:onUpdateValue()
+end
+
+function ProgressTrack:updateValue(value)
+  local previous_value = self.value
+  local changed = false
+  self.value = _t.clone(value)
+
+  if self.value.difficulty ~= previous_value.difficulty then
+    changed = true
+    self:updateDifficulty(value.difficulty)
+  end
+
+  if self.description and self.value.description ~= previous_value.description then
+    changed = true
+    self.description:updateValue(value.description)
+  end
+
+  if changed or self.value.value ~= previous_value.value then
+    self:update()
+  end
 end
 
 return ProgressTrack

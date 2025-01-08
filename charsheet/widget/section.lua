@@ -22,7 +22,7 @@ local Section = FrameContainer:extend {
   radius = 0,
   bordersize = 0,
   align = "center",
-  items = {},
+  children = {},
   invert_label = false,
   -- TODO: left/right vs top/bottom padding
   inner_padding = Size.padding.default,
@@ -48,7 +48,7 @@ function Section:init()
     padding = self.inner_padding,
     VerticalGroup:new {
       align = "left",
-      table.unpack(self.items)
+      table.unpack(self.children)
     }
   }
 

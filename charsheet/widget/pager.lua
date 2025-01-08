@@ -13,7 +13,7 @@ local FrameContainer = require("ui/widget/container/framecontainer")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local ScrollableContainer = require("ui/widget/container/scrollablecontainer")
 
-local Flex = require("widget/flex")
+local FlexContainer = require("charsheet/widget/flex_container")
 
 local Screen = Device.screen
 
@@ -92,9 +92,9 @@ function Pager:init()
   }
   self:updatePageText()
 
-  local controls = Flex:new {
-    justify_content = Flex.SPACE_BETWEEN,
-    align_items = Flex.STRETCH,
+  local controls = FlexContainer:new {
+    justify_content = FlexContainer.SPACE_BETWEEN,
+    align_items = FlexContainer.STRETCH,
     width = self.width,
     children = {
       first_page_button,

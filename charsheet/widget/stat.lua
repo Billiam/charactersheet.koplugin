@@ -26,7 +26,7 @@ local Stat = InputContainer:extend {
   width = Screen:scaleBySize(50),
 
   label = nil,
-  value = 0,
+  value = nil,
   min = nil,
   max = nil,
   radius = 5,
@@ -48,19 +48,30 @@ local Stat = InputContainer:extend {
 }
 
 function Stat:init()
+  self.value = self.value or { value = 0 }
+
   if self.min then
-    self.value = math.max(self.min, self.value)
+    self.value.value = math.max(self.min, self.value.value)
   end
   if self.max then
-    self.value = math.min(self.max, self.value)
+    self.value.value = math.min(self.max, self.value.value)
   end
+
   self.value_text = TextWidget:new {
-    text = self.value,
+    text = self.value.value,
     face = Font:getFace("cfont", self.value_font_size),
     bold = true,
   }
   local divider
   if self.has_secondary_value then
+    self.value.secondary = self.value.secondary or 0
+    if self.secondary_min then
+      self.value.secondary = math.min(self.secondary_min, self.value.secondary)
+    end
+    if self.secondary_max then
+      self.value.secondary = math.min(self.secondary_max, self.value.secondary)
+    end
+
     divider = LineWidget:new {
       dimen = Geom:new {
         h = Size.border.thin,
@@ -78,12 +89,12 @@ function Stat:init()
       callback = function()
         self:showSpinner(
           false,
-          self.secondary_value,
+          self.value.secondary,
           self.secondary_min,
           self.secondary_max,
           self.secondary_label or (self.label .. " (secondary)"),
           function(value)
-            self.value = value
+            self.value.secondary = value
           end)
       end
     }
@@ -182,10 +193,9 @@ function Stat:showSpinner(primary_label, value, min, max, label, callback)
     callback = function(spin)
       if primary_label then
         self:setValue(spin.value)
-        self.value_text:setText(spin.value)
-        UIManager:setDirty(self.value_box, "partial")
+        self:refresh()
       else
-        self.secondary_button:setText(spin.value)
+        self:setSecondaryValue(spin.value)
         self.secondary_button:refresh()
       end
       callback(spin.value)
@@ -204,13 +214,24 @@ function Stat:decrement()
 end
 
 function Stat:deviate(amount)
-  local original_value = self.value
-  self.value = math.min(self.max, math.max(self.min, self.value + amount))
-  if self.value ~= original_value then
-    self.value_text:setText(self.value)
-    UIManager:setDirty(self.show_parent, "partial", self.dimen)
-    self.callback(self.name, self.value)
+  local original_value = self.value.value
+  self.value.value = self.value.value + amount
+  if self.min then
+    self.value.value = math.max(self.min, self.value.value)
   end
+  if self.max then
+    self.value.value = math.min(self.max, self.value.value)
+  end
+
+  if self.value.value ~= original_value then
+    self.value_text:setText(self.value.value)
+    self:refresh()
+  end
+end
+
+function Stat:refresh()
+  UIManager:setDirty(self.show_parent, "partial", self.dimen)
+  self.callback(self.name, self.value)
 end
 
 function Stat:onSwipe(_, ges)
@@ -225,8 +246,8 @@ function Stat:onSwipe(_, ges)
 end
 
 function Stat:onTap()
-  self:showSpinner(true, self.value, self.min, self.max, self.label, function(value)
-    self.value = value
+  self:showSpinner(true, self.value.value, self.min, self.max, self.label, function(value)
+    self.value.value = value
     self.callback(self.name, self.value)
   end)
 end
@@ -236,10 +257,28 @@ function Stat:onHold()
 end
 
 function Stat:setValue(value)
-  self.value = value
+  self.value.value = value
   self.value_text:setText(value)
-  UIManager:setDirty(self.show_parent, "partial", self.dimen)
-  self.callback(self.name, self.value)
+end
+
+function Stat:setSecondaryValue(value)
+  self.value.secondary = value
+  self.secondary_button:setText(value)
+end
+
+function Stat:updateValue(value)
+  local changed = value.value ~= self.value.value or
+      (self.has_secondary_value and self.value.secondary ~= value.secondary)
+  logger.warn("changed", changed, value.value, self.value.value)
+
+  self:setValue(value.value)
+  if self.has_secondary_value then
+    self:setSecondaryValue(value.secondary)
+  end
+
+  if changed then
+    self:refresh()
+  end
 end
 
 return Stat

@@ -9,11 +9,10 @@ local tick_images = {
   "icon/check_4.svg",
 }
 
-local ProgressCheckbox = InputContainer:extend{
+local ProgressCheckbox = InputContainer:extend {
   value = 0,
   width = 25,
   height = 25,
-  callback = nil,
   margin = nil,
   path = "",
 
@@ -22,7 +21,7 @@ local ProgressCheckbox = InputContainer:extend{
 }
 
 function ProgressCheckbox:getSize()
-  return {w = self.width, h = self.height }
+  return { w = self.width, h = self.height }
 end
 
 function ProgressCheckbox:update()
@@ -48,12 +47,11 @@ function ProgressCheckbox:increment()
 end
 
 function ProgressCheckbox:init()
-
   local callback = self.callback or function() self:increment() end
 
   self.button = Button:new {
     width = self.width,
-    height = self.height - 2,  -- inner frame border handles size inconsistently
+    height = self.height - 2, -- inner frame border handles size inconsistently
     padding = 0,
     text_font_size = 16,
     icon = "",
@@ -66,6 +64,11 @@ function ProgressCheckbox:init()
   self:update()
 
   self[1] = self.button
+end
+
+function ProgressCheckbox:updateValue(value)
+  self.value = value
+  self:update()
 end
 
 return ProgressCheckbox
