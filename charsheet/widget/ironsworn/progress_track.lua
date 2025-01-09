@@ -17,7 +17,7 @@ local FlexContainer = require("charsheet/widget/flex_container")
 local InputButton = require("charsheet/widget/input_button")
 
 local Screen = Device.screen
-logger.warn("DOTS", ...)
+
 local DIFFICULTIES = {
   Troublesome = 12,
   Dangerous = 8,
@@ -95,10 +95,8 @@ function ProgressTrack:setDifficulty(difficulty)
 end
 
 function ProgressTrack:updateDifficulty(difficulty)
-  logger.warn("Updating difficulty to", difficulty)
   self:setDifficulty(difficulty)
   if self.show_difficulty then
-    logger.warn("Showing difficulty")
     self.difficulty_button:setText(difficulty, self.difficulty_button:getSize().w)
     UIManager:setDirty(self.show_parent, "ui", self.difficulty_button.dimen)
   end
