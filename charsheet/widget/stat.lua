@@ -232,7 +232,6 @@ end
 
 function Stat:refresh()
   UIManager:setDirty(self.show_parent, "partial", self.dimen)
-  self.callback(self.name, self.value)
 end
 
 function Stat:onSwipe(_, ges)
