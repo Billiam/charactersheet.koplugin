@@ -1,6 +1,25 @@
 {
   "name": "Starforged",
-  "defaults": {},
+  "defaults": {
+    "health": {
+      "value": 5
+    },
+    "spirit": {
+      "value": 5
+    },
+    "supply": {
+      "value": 5
+    },
+    "momentum": {
+      "value": 2
+    },
+    "momentum_reset": {
+      "value": 2
+    },
+    "momentum_max": {
+      "value": 10
+    }
+  },
   "pages": [
     {
       "type": "VerticalGroup",
@@ -84,7 +103,7 @@
                   "label": "Edge",
                   "name": "edge",
                   "margin": 0,
-                  "min": 1,
+                  "min": 0,
                   "max": 4,
                   "width": "19.2%"
                 }
@@ -102,7 +121,7 @@
                   "label": "Heart",
                   "name": "heart",
                   "margin": 0,
-                  "min": 1,
+                  "min": 0,
                   "max": 4,
                   "width": "19.2%"
                 }
@@ -120,7 +139,7 @@
                   "label": "Iron",
                   "name": "iron",
                   "margin": 0,
-                  "min": 1,
+                  "min": 0,
                   "max": 4,
                   "width": "19.2%"
                 }
@@ -138,7 +157,7 @@
                   "label": "Shadow",
                   "name": "shadow",
                   "margin": 0,
-                  "min": 1,
+                  "min": 0,
                   "max": 4,
                   "width": "19.2%"
                 }
@@ -156,7 +175,7 @@
                   "label": "Wits",
                   "name": "wits",
                   "margin": 0,
-                  "min": 1,
+                  "min": 0,
                   "max": 4,
                   "width": "19.2%"
                 }
