@@ -56,12 +56,16 @@
                   "hint": "Characteristics",
                   "name": "characteristics",
                   "margin": 0,
-                  "width": "35%",
+                  "width": "60%",
                   "height": 100
                 }
               ]
             }
           ]
+        },
+        {
+          "type": "VerticalSpan",
+          "width": 10
         },
         {
           "type": "FlexContainer",
@@ -289,50 +293,67 @@
           "width": "100%"
         },
         {
-          "type": "Section",
-          "label": "Quests",
-          "width": "100%",
-          "bordersize": 0,
-          "inner_padding": 0,
+          "type": "HorizontalGroup",
+          "align": "top",
           "children": [
+            {
+              "type": "Text",
+              "rotation": -90,
+              "padding": 0,
+              "text": "Quests",
+              "font_size": 14
+            },
             {
               "type": "Input",
               "input_type": "LegacyTrack",
               "name": "quests",
-              "spacing": 10,
-              "width": "100%"
+              "spacing": 10
             }
           ]
         },
         {
-          "type": "Section",
-          "label": "Bonds",
-          "width": "100%",
-          "bordersize": 0,
-          "inner_padding": 0,
+          "type": "VerticalSpan",
+          "width": 15
+        },
+        {
+          "type": "HorizontalGroup",
+          "align": "top",
           "children": [
+            {
+              "type": "Text",
+              "rotation": -90,
+              "padding": 0,
+              "text": "Bonds",
+              "font_size": 14
+            },
             {
               "type": "Input",
               "input_type": "LegacyTrack",
               "name": "bonds",
-              "spacing": 10,
-              "width": "100%"
+              "spacing": 10
             }
           ]
         },
         {
-          "type": "Section",
-          "label": "Discoveries",
-          "width": "100%",
-          "bordersize": 0,
-          "inner_padding": 0,
+          "type": "VerticalSpan",
+          "width": 15
+        },
+        {
+          "type": "HorizontalGroup",
+          "align": "top",
           "children": [
+            {
+              "type": "Text",
+              "rotation": -90,
+              "padding": 0,
+              "text": "Discoveries",
+              "font_size": 14
+            },
             {
               "type": "Input",
               "input_type": "LegacyTrack",
               "name": "discoveries",
-              "spacing": 10,
-              "width": "100%"
+              "spacing": 10
             }
           ]
         },
