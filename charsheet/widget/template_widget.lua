@@ -6,16 +6,17 @@ local TextWidget = require("ui/widget/textwidget")
 
 local Checkbox = require("charsheet/widget/checkbox")
 local Checklist = require("charsheet/widget/checklist")
+local Divider = require("charsheet/widget/divider")
 local FilledCheckbox = require("charsheet/widget/filled_checkbox")
 local FlexContainer = require("charsheet/widget/flex_container")
 local InputButton = require("charsheet/widget/input_button")
 local LegacyTrack = require("charsheet/widget/ironsworn/legacy_track")
 local ProgressTrack = require("charsheet/widget/ironsworn/progress_track")
+local RotatableTextWidget = require("charsheet/widget/rotatable_text_widget")
+local Section = require("charsheet/widget/section")
 local ShadowContainer = require("charsheet/widget/shadow_container")
 local Stat = require("charsheet/widget/stat")
 local Textarea = require("charsheet/widget/textarea")
-local Divider = require("charsheet/widget/divider")
-local Section = require("charsheet/widget/section")
 
 -- useful layout components
 local HorizontalSpan = require("ui/widget/horizontalspan")
@@ -136,10 +137,13 @@ function TemplateWidget:builders()
 
       Text = {
         new = function(_, data)
-          return TextWidget:new {
-            text = data.text,
-            face = Font:getFace("cfont", data.font_size or 16)
-          }
+          data.face = Font:getFace("cfont", data.font_size or 16)
+
+          if data.rotation and data.rotation ~= 0 then
+            return RotatableTextWidget:new(data)
+          else
+            return TextWidget:new(data)
+          end
         end
       },
 
