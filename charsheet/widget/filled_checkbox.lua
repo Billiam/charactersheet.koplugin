@@ -14,6 +14,7 @@ local FilledCheckbox = InputContainer:extend {
 }
 
 function FilledCheckbox:init()
+  self.checked = self.value
   self[1] = FrameContainer:new {
     bordersize = self.bordersize,
     width = self.size,
@@ -65,6 +66,10 @@ end
 
 function FilledCheckbox:updateValue(value)
   self:setChecked(value)
+end
+
+function FilledCheckbox:getValue()
+  return self.checked
 end
 
 return FilledCheckbox

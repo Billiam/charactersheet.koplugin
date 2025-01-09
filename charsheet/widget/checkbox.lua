@@ -103,4 +103,8 @@ function Checkbox:updateValue(value)
   self:setChecked(value)
 end
 
+function Checkbox:getValue()
+  return self.value
+end
+
 return Checkbox

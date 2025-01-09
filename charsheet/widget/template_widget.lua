@@ -35,8 +35,8 @@ local LeftContainer = require("ui/widget/container/leftcontainer")
 local RightContainer = require("ui/widget/container/rightcontainer")
 local BottomContainer = require("ui/widget/container/bottomcontainer")
 local CenterContainer = require("ui/widget/container/centercontainer")
-local FrameContainer = require("ui/widget/container/topcontainer")
-local UnderlineContainer = require("ui/widget/container/topcontainer")
+local FrameContainer = require("ui/widget/container/framecontainer")
+local UnderlineContainer = require("ui/widget/container/underlinecontainer")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 
 local TemplateWidget = WidgetContainer:extend {
@@ -249,7 +249,7 @@ end
 
 function TemplateWidget:onDataUpdate(name, value)
   for _, field in ipairs(self.field_map[name] or {}) do
-    if field.value ~= value then
+    if field:getValue() ~= value then
       field:updateValue(value)
     end
   end

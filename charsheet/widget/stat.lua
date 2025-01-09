@@ -226,6 +226,7 @@ function Stat:deviate(amount)
   if self.value.value ~= original_value then
     self.value_text:setText(self.value.value)
     self:refresh()
+    self.callback(self.name, self.value)
   end
 end
 
@@ -269,7 +270,6 @@ end
 function Stat:updateValue(value)
   local changed = value.value ~= self.value.value or
       (self.has_secondary_value and self.value.secondary ~= value.secondary)
-  logger.warn("changed", changed, value.value, self.value.value)
 
   self:setValue(value.value)
   if self.has_secondary_value then
@@ -279,6 +279,10 @@ function Stat:updateValue(value)
   if changed then
     self:refresh()
   end
+end
+
+function Stat:getValue()
+  return self.value
 end
 
 return Stat

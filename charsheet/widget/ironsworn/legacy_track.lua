@@ -167,4 +167,8 @@ function LegacyTrack:updateValue(value)
   end
 end
 
+function LegacyTrack:getValue()
+  return self.value
+end
+
 return LegacyTrack

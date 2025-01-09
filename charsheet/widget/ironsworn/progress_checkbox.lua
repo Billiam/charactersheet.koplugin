@@ -71,4 +71,8 @@ function ProgressCheckbox:updateValue(value)
   self:update()
 end
 
+function ProgressCheckbox:getValue()
+  return self.value
+end
+
 return ProgressCheckbox

@@ -3,14 +3,18 @@ local Font = require("ui/font")
 local InputDialog = require("ui/widget/inputdialog")
 local UIManager = require("ui/uimanager")
 local ScrollTextWidget = require("ui/widget/scrolltextwidget")
+local Device = require("device")
+local Screen = Device.screen
 
 local Textarea = ScrollTextWidget:extend {
   callback = nil,
   name = nil,
-  font_size = 16
+  font_size = 16,
 }
 
 function Textarea:init()
+  self.text = self.value
+
   self.face = Font:getFace("cfont", self.font_size)
   local restore_text = self.text
 
@@ -28,6 +32,8 @@ function Textarea:setValue(text)
     return
   end
 
+  self.text = text
+
   if text and text ~= "" then
     self.text_widget.fgcolor = Blitbuffer.COLOR_BLACK
     self.text_widget:setText(text)
@@ -37,8 +43,8 @@ function Textarea:setValue(text)
   end
 
   self.prev_low = nil
+  self:resetScroll()
   self:updateScrollBar()
-  self.text = text
   self:scrollToTop()
 end
 
@@ -49,6 +55,7 @@ function Textarea:onTapScrollText(arg, ges)
     input = self.text,
     input_hint = self.hint,
     allow_newline = true,
+    text_height = Screen:scaleBySize(100),
     save_callback = function(value)
       UIManager:close(dialog)
       self:setValue(value)
@@ -65,6 +72,10 @@ end
 
 function Textarea:updateValue(value)
   self:setValue(value)
+end
+
+function Textarea:getValue()
+  return self.text
 end
 
 return Textarea

@@ -106,4 +106,8 @@ function InputButton:updateValue(value)
   self:setValue(value, true)
 end
 
+function InputButton:getValue()
+  return self.value
+end
+
 return InputButton

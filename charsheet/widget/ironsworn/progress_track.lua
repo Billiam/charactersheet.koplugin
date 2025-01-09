@@ -270,4 +270,8 @@ function ProgressTrack:updateValue(value)
   end
 end
 
+function ProgressTrack:getValue()
+  return self.value
+end
+
 return ProgressTrack

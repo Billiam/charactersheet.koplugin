@@ -61,4 +61,8 @@ function Checklist:updateValue(value)
   end
 end
 
+function Checklist:getValue()
+  return self.value
+end
+
 return Checklist
