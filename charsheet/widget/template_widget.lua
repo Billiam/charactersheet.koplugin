@@ -38,6 +38,7 @@ local CenterContainer = require("ui/widget/container/centercontainer")
 local FrameContainer = require("ui/widget/container/framecontainer")
 local UnderlineContainer = require("ui/widget/container/underlinecontainer")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
+local _t = require("charsheet/lib/table_util")
 
 local TemplateWidget = WidgetContainer:extend {
   direction = "vertical",
@@ -179,7 +180,8 @@ local color_keys = {
   "background", "color", "fgcolor"
 }
 
-function TemplateWidget:buildWidget(config, data)
+function TemplateWidget:buildWidget(widget_config, data)
+  local config = _t.clone(widget_config)
   local type = config.type
   config.type = nil
 
