@@ -126,11 +126,12 @@ function ProgressTrack:showDifficultySelect()
 end
 
 function ProgressTrack:init()
-  self.value = {
-    difficulty = "Epic",
-    description = "",
-    value = 0
-  }
+  self.value = _t.clone(self.value)
+
+  self.value.difficulty = self.value.difficulty or "Epic"
+  self.value.value = self.value.value or 0
+  self.value.description = self.value.description or ""
+
   self.checkboxes = {}
   self.height = self.height or self.checkbox_size + 5
 
