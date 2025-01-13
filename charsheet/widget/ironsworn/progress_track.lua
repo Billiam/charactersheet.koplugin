@@ -126,6 +126,21 @@ function ProgressTrack:showDifficultySelect()
 end
 
 function ProgressTrack:init()
+  local default = {
+    difficulty = "Epic",
+    value = 0,
+    description = ""
+  }
+  if self.value then
+    for k, v in pairs(default) do
+      if self.value[k] == nil then
+        self.value[k] = v
+      end
+    end
+  else
+    self.value = default
+  end
+
   self.value = _t.clone(self.value)
 
   self.value.difficulty = self.value.difficulty or "Epic"

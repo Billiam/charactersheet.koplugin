@@ -30,13 +30,15 @@ function TableUtil.contains(t, value)
     return false
   end
 
-  for _, v in ipairs(t) do
-    if v == value then
-      return true
+  return TableUtil.find(t, value) ~= nil
+end
+
+function TableUtil.find(t, value)
+  for i, v in ipairs(t) do
+    if value == v then
+      return i
     end
   end
-
-  return false
 end
 
 return TableUtil

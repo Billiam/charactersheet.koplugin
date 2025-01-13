@@ -54,12 +54,20 @@ function LegacyTrack:markTen(value)
 end
 
 function LegacyTrack:init()
-  self.value = {
+  local default = {
     value = 0,
     xp = 0,
     ten_marked = false,
   }
-
+  if self.value then
+    for k, v in pairs(default) do
+      if self.value[k] == nil then
+        self.value[k] = v
+      end
+    end
+  else
+    self.value = default
+  end
   self.increment_value = 1
 
   self.checkboxes = {}
