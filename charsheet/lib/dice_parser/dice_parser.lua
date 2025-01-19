@@ -166,7 +166,11 @@ end)
 local replacementValue = P("replacement_value", function()
   -- when should captures be terminated?
   -- TODO allow full dice roll in replacement value instead of simple xdx roll
-  return c.any(range(), digitsAsInt(), c.between("[", "]", die()))
+  return c.map(c.any(range(), digitsAsInt(), c.between("[", "]", die())), function(result)
+    -- any combinator returns the inner result, and then the parser will be lost
+    result.type = result.parser
+    return result
+  end)
 end)
 
 -- TODO allow string value replacements
@@ -189,14 +193,13 @@ local valueReplacement = P("value_replacement", function()
     r.replacement = _t.map(result.values, function(replacement)
       local parsed_replacement = replacement.values[4]
       local replacement_value
-
-      if parsed_replacement.parser == "range" then
+      if parsed_replacement.type == "range" then
         replacement_value = {
           from = replacement.values[4].from,
           to = replacement.values[4].to,
           type = "random",
         }
-      elseif parsed_replacement.parser == "die" then
+      elseif parsed_replacement.type == "die" then
         replacement_value = {
           type = "roll",
           sides = replacement.captures.sides,

@@ -171,7 +171,15 @@ describe("dice", function()
       assert.equal("value_replacement", result.parser)
       assert.are.same(
         {
-          { value = 5, replacement = { type = "random", from = 10, to = 20 }, condition = ">" },
+          {
+            value = 5,
+            condition = ">",
+            replacement = {
+              type = "random",
+              from = 10,
+              to = 20
+            }
+          }
         },
         result.replacement
       )
@@ -183,7 +191,15 @@ describe("dice", function()
       assert.equal("value_replacement", result.parser)
       assert.are.same(
         {
-          { value = 5, replacement = { type = "roll", quantity = 2, sides = 6 }, condition = ">" },
+          {
+            value = 5,
+            condition = ">",
+            replacement = {
+              type = "roll",
+              quantity = 2,
+              sides = 6
+            }
+          }
         },
         result.replacement
       )
