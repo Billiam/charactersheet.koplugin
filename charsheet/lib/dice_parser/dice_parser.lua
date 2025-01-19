@@ -237,6 +237,79 @@ local unique = P("unique", function()
   end)
 end)
 
+local explodeRerollCondition = P("explode_reroll_condition", function()
+  return c.map(
+    c.sequence(
+      c.capture("value", digitsAsInt()),
+      c.capture("operator", c.any(">=", "<=", ">", "<", "=")),
+      c.between("[", "]",
+        die()
+      )
+    ), function(result)
+      return {
+        rest = result.rest,
+        type = "roll",
+        value = result.captures.value,
+        operator = result.captures.operator,
+        sides = result.captures.sides,
+        quantity = result.captures.quantity
+      }
+    end)
+end)
+
+local explodeConditions = P("explode_conditions", function()
+  -- when should captures be terminated?
+  -- TODO allow full dice roll in replacement value instead of simple xdx roll
+  return c.between("{", "}",
+    c.list(",",
+      c.any(
+        explodeRerollCondition(),
+        numberInequality()
+      )
+    )
+  )
+end)
+
+local explodeMany = P("explode_many", function()
+  return c.dropLeftValue(1, c.sequence("!", c.optional(explodeConditions()), c.optional(digitsAsInt())))
+end)
+local explodeOnce = P("explode_once", function()
+  return c.dropLeftValue(1, c.sequence("!!", c.optional(explodeConditions()), c.optional(digitsAsInt())))
+end)
+local explodeReduced = P("explode_reduced", function()
+  return c.dropLeftValue(1, c.sequence("!!!", c.optional(explodeConditions()), c.optional(digitsAsInt())))
+end)
+
+local explode = P("explode", function()
+  return c.map(c.any(explodeReduced(), explodeOnce(), explodeMany()), function(result)
+    local r = {
+      explode = true,
+      explode_type = result.parser,
+      rest = result.rest
+    }
+    local condition = result.values[1]
+
+    if condition.values then
+      r.explode_on = {}
+      for i, cond in ipairs(condition.values) do
+        if cond.parser == "explode_reroll_condition" then
+          r.explode_on[i] = _t.clone(cond)
+        else
+          r.explode_on[i] = {
+            value = cond.value,
+            operator = cond.inequality or "="
+          }
+        end
+      end
+    end
+
+    if result.values[2].value then
+      r.explode_count = result.values[2].value
+    end
+
+    return r
+  end)
+end)
 
 local interpolation = function()
   return c.between(c.literal("{{"), c.literal("}}"), variables())
@@ -246,6 +319,7 @@ local dieModifier = P("modifiers", function()
   return c.nOrMoreUnique(0,
     c.capture("keep", keep()),
     c.capture("drop", drop()),
+    c.capture("explode", explode()),
     c.capture("clamp", clamp()),
     c.unique("unique", unique()),
     c.capture("value_replacement", valueReplacement())
@@ -253,11 +327,12 @@ local dieModifier = P("modifiers", function()
 end)
 
 return {
-  die = die,
-  keep = keep,
-  drop = drop,
   clamp = clamp,
+  die = die,
+  dieModifier = dieModifier,
+  drop = drop,
+  explode = explode,
+  keep = keep,
   unique = unique,
   valueReplacement = valueReplacement,
-  dieModifier,
 }

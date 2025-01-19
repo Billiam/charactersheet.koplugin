@@ -1,5 +1,6 @@
 local parser = require("charsheet/lib/dice_parser/parser")
 local dice = require("charsheet/lib/dice_parser/dice_parser")
+local _t = require("charsheet/lib/table_util")
 
 describe("dice", function()
   describe("keep", function()
@@ -201,6 +202,59 @@ describe("dice", function()
         },
         result.replacement
       )
+    end)
+  end)
+
+  describe("explode", function()
+    it("matches explosion", function()
+      local result = dice.explode()("!")
+
+      assert.equal("explode", result.parser)
+      assert.equal("explode_many", result.explode_type)
+    end)
+
+    it("explodes extra dice", function()
+      local result = dice.explode()("!3")
+
+      assert.equal(3, result.explode_count)
+    end)
+
+    it("explodes on selectable values", function()
+      local result = dice.explode()("!{<2,6}")
+
+      assert.are.same({ value = 2, operator = "<" }, result.explode_on[1])
+      assert.are.same({ value = 6, operator = "=" }, result.explode_on[2])
+    end)
+
+    it("explodes with a new roll", function()
+      local result = dice.explode()("!{20=[2d6]}")
+
+      local condition = result.explode_on[1]
+      assert.equal("roll", condition.type)
+      assert.equal(20, condition.value)
+      assert.equal(6, condition.sides)
+      assert.equal(2, condition.quantity)
+      assert.equal("=", condition.operator)
+    end)
+
+    it("matches explode once", function()
+      local result = dice.explode()("!!")
+
+      assert.equal("explode", result.parser)
+      assert.equal("explode_once", result.explode_type)
+    end)
+
+    it("matches reducing explosion", function()
+      local result = dice.explode()("!!!")
+
+      assert.equal("explode", result.parser)
+      assert.equal("explode_reduced", result.explode_type)
+    end)
+
+    it("returns nil on error", function()
+      local result = dice.explode()("{3,6}")
+
+      assert.is_nil(result)
     end)
   end)
 end)

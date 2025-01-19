@@ -70,7 +70,7 @@ local function dump(value, call_indent)
       else
         child = dump(inner_value, indent)
       end
-      output = output .. inner_key .. " = " .. child
+      output = output .. inner_key .. " = " .. tostring(child)
     end
     output = output .. "\n" .. call_indent .. "}"
   elseif type(value) == "userdata" then
@@ -83,8 +83,8 @@ local function dump(value, call_indent)
   return output
 end
 
-function TableUtil.dump(table, print)
-  if print == false then
+function TableUtil.dump(table, print_output)
+  if print_output == false then
     return dump(table)
   end
 
