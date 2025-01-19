@@ -337,6 +337,32 @@ local reroll = P("reroll", function()
   end)
 end)
 
+local count = P("count", function()
+  return c.map(c.dropLeftValue(1,
+    c.sequence(
+      "#",
+      c.optional(c.between("{", "}",
+        c.list(",", numberInequality())
+      ))
+    )
+  ), function(result)
+    local r = {
+      rest = result.rest,
+      count = {},
+    }
+    if result.values[1].values then
+      for i, condition in ipairs(result.values[1].values) do
+        r.count[i] = {
+          operator = condition.inequality or "=",
+          value = condition.value
+        }
+      end
+    end
+
+    return r
+  end)
+end)
+
 local interpolation = function()
   return c.between(c.literal("{{"), c.literal("}}"), variables())
 end
@@ -354,6 +380,7 @@ end)
 
 return {
   clamp = clamp,
+  count = count,
   die = die,
   dieModifier = dieModifier,
   drop = drop,

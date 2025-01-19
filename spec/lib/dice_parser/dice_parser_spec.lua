@@ -273,4 +273,23 @@ describe("dice", function()
       }, result.reroll_conditions)
     end)
   end)
+
+  describe("count", function()
+    it("matches count", function()
+      local result = dice.count()("#")
+
+      assert.equal("count", result.parser)
+      assert.are.same({}, result.count)
+    end)
+
+    it("supports count conditions", function()
+      local result = dice.count()("#{<4,5}")
+
+      assert.equal("count", result.parser)
+      assert.are.same({
+        { value = 4, operator = "<" },
+        { value = 5, operator = "=" },
+      }, result.count)
+    end)
+  end)
 end)
