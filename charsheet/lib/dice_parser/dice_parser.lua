@@ -1,6 +1,5 @@
 local c = require("charsheet/lib/dice_parser/combinators")
 local _t = require("charsheet/lib/table_util")
-local dump = require("charsheet/lib/dump")
 local P = require("charsheet/lib/dice_parser/parser")
 
 local digits = function()

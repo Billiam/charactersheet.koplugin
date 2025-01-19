@@ -1,8 +1,6 @@
 local parser = require("charsheet/lib/dice_parser/parser")
 local dice = require("charsheet/lib/dice_parser/dice_parser")
 
-local dump = require("charsheet/lib/dump")
-
 describe("dice", function()
   describe("keep", function()
     it("matches keep highest", function()

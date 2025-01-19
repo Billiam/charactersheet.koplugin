@@ -1,5 +1,4 @@
 local _c = require("charsheet/lib/dice_parser/combinators")
-local dump = require("charsheet/lib/dump")
 
 describe("combinators", function()
   describe("literal", function()

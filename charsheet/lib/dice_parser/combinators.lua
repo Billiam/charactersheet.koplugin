@@ -1,6 +1,5 @@
 local _t = require("charsheet/lib/table_util")
 local P = require("charsheet/lib/dice_parser/parser")
-local dump = require("charsheet/lib/dump")
 
 local literal = P("literal", function(chars)
   return function(str)
