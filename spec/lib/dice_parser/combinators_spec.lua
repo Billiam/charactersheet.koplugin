@@ -241,7 +241,7 @@ describe("combinators", function()
   end)
 
   describe("sequence", function()
-    it("matches when all combinators match", function()
+    it("matches when all parsers match", function()
       local food = _c.sequence(_c.literal("f"), _c.literal("o"), _c.literal("od"))
       local result = food("food truck")
 
@@ -252,7 +252,7 @@ describe("combinators", function()
       assert.equal(" truck", result.rest)
     end)
 
-    it("only matches when combinators appear in the correct order", function()
+    it("only matches when parsers appear in the correct order", function()
       local food = _c.sequence(_c.literal("f"), _c.literal("o"), _c.literal("o"), _c.literal("d"))
       local result = food("fodo")
 
@@ -388,14 +388,14 @@ describe("combinators", function()
 
   describe("ignore", function()
     it("clears the result value", function()
-      local passthrough_combinator = function(str)
+      local passthrough_parser = function(str)
         return {
           value = str,
           rest = "rest"
         }
       end
 
-      local ignored = _c.ignore(passthrough_combinator)
+      local ignored = _c.ignore(passthrough_parser)
       local result = ignored("hello")
 
       assert.is_nil(result.value)
@@ -420,14 +420,14 @@ describe("combinators", function()
 
   describe("nthValue", function()
     it("returns result values by index", function()
-      local values_combinator = function()
+      local values_parser = function()
         return {
           value = "original_value",
           values = { { value = "a" }, { value = "b" } },
           rest = "rest"
         }
       end
-      local second_value = _c.nthValue(2, values_combinator)
+      local second_value = _c.nthValue(2, values_parser)
       local result = second_value("")
 
       assert.equal("b", result.value)

@@ -43,8 +43,8 @@ local any = function(...)
   local parsers = _t.map({ ... }, toLiteral)
 
   return function(str)
-    for _, combinator in ipairs(parsers) do
-      local result = combinator(str)
+    for _, parser in ipairs(parsers) do
+      local result = parser(str)
 
       if result then
         return result
@@ -62,17 +62,17 @@ local optional = function(parser)
   end
 end
 
-local map = function(combinator, m)
+local map = function(parser, m)
   return function(str)
-    local result = combinator(str)
+    local result = parser(str)
     if result then
       return m(result)
     end
   end
 end
 
-local concatenate = function(combinator)
-  return map(combinator, function(result)
+local concatenate = function(parser)
+  return map(parser, function(result)
     local r = _t.clone(result)
     local values = {}
     for _, v in ipairs(result.values) do
@@ -86,14 +86,14 @@ local concatenate = function(combinator)
   end)
 end
 
-local capture = function(name, key, combinator, m)
+local capture = function(name, key, parser, m)
   if type(key) == "function" then
-    m = combinator
-    combinator = key
+    m = parser
+    parser = key
     key = "value"
   end
 
-  return map(combinator, function(result)
+  return map(parser, function(result)
     local r = _t.clone(result)
     r.captures = r.captures and _t.clone(r.captures) or {}
     r.captures[name] = m and m(r[key]) or r[key]
@@ -101,22 +101,22 @@ local capture = function(name, key, combinator, m)
   end)
 end
 
-local captureValues = function(name, combinator)
-  return capture(name, "values", combinator)
+local captureValues = function(name, parser)
+  return capture(name, "values", parser)
 end
 
 
 -- TODO: don't need values array, but might require an unpack
 local sequence = function(...)
-  local combinators = _t.map({ ... }, toLiteral)
+  local parsers = _t.map({ ... }, toLiteral)
 
   return function(str)
     local rest = str
     local val = {}
     local captures = {}
 
-    for i, combinator in ipairs(combinators) do
-      local result = combinator(rest)
+    for i, parser in ipairs(parsers) do
+      local result = parser(rest)
       if not result then
         return
       end
@@ -138,15 +138,15 @@ local sequence = function(...)
   end
 end
 
-local nOrMore = function(n, combinator)
-  combinator = toLiteral(combinator)
+local nOrMore = function(n, parser)
+  parser = toLiteral(parser)
 
   return function(str)
     local rest = str
     local matches = {}
 
     while true do
-      local result = combinator(rest)
+      local result = parser(rest)
       if result then
         table.insert(matches, result)
         rest = result.rest
@@ -166,26 +166,26 @@ local nOrMore = function(n, combinator)
 end
 
 local nOrMoreUnique = function(n, ...)
-  local combinators = _t.map({ ... }, toLiteral)
+  local parsers = _t.map({ ... }, toLiteral)
 
   return function(str)
     local rest = str
     local results = {}
     local captures = {}
 
-    while rest ~= "" and #combinators > 0 do
+    while rest ~= "" and #parsers > 0 do
       local success = false
-      for i, combinator in ipairs(combinators) do
-        local combinator_result = combinator(rest)
-        if combinator_result then
-          rest = combinator_result.rest
-          if combinator_result.captures then
-            for k, v in pairs(combinator_result.captures) do
+      for i, parser in ipairs(parsers) do
+        local parser_result = parser(rest)
+        if parser_result then
+          rest = parser_result.rest
+          if parser_result.captures then
+            for k, v in pairs(parser_result.captures) do
               captures[k] = v
             end
           end
-          table.insert(results, combinator_result)
-          table.remove(combinators, i)
+          table.insert(results, parser_result)
+          table.remove(parsers, i)
           success = true
 
           break
@@ -224,8 +224,8 @@ local between = function(left, right, middle)
 end
 
 
-local nthValue = function(n, combinator)
-  return map(combinator, function(result)
+local nthValue = function(n, parser)
+  return map(parser, function(result)
     if not result then
       return
     end
@@ -237,8 +237,8 @@ local nthValue = function(n, combinator)
   end)
 end
 
-local dropLeftValue = function(n, combinator)
-  return map(combinator, function(result)
+local dropLeftValue = function(n, parser)
+  return map(parser, function(result)
     if not result then
       return
     end
