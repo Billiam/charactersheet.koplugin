@@ -283,19 +283,18 @@ end)
 local explode = P("explode", function()
   return c.map(c.any(explodeReduced(), explodeOnce(), explodeMany()), function(result)
     local r = {
-      explode = true,
+      explode = {},
       explode_type = result.parser,
       rest = result.rest
     }
     local condition = result.values[1]
 
     if condition.values then
-      r.explode_on = {}
       for i, cond in ipairs(condition.values) do
         if cond.parser == "explode_reroll_condition" then
-          r.explode_on[i] = _t.clone(cond)
+          r.explode[i] = _t.clone(cond)
         else
-          r.explode_on[i] = {
+          r.explode[i] = {
             value = cond.value,
             operator = cond.inequality or "="
           }
