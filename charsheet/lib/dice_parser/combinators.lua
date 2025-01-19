@@ -1,17 +1,29 @@
 local _t = require("charsheet/lib/table_util")
+local P = require("charsheet/lib/dice_parser/parser")
+local dump = require("charsheet/lib/dump")
 
-local literal = function(chars)
+local literal = P("literal", function(chars)
   return function(str)
-    if str:sub(1, #chars) == chars then
+    local begin_chars = str:sub(1, #chars)
+    if begin_chars == chars then
       return {
         value = chars,
         rest = str:sub(#chars + 1)
       }
+      --else
+      --  return P.err "Expected " .. chars .. ", received " .. begin_chars
     end
   end
+end)
+
+local toLiteral = function(parser)
+  if type(parser) == "string" then
+    return literal(parser)
+  end
+  return parser
 end
 
-local match = function(pattern)
+local match = P("match", function(pattern)
   -- TODO captures
   pattern = pattern:sub(1, 1) == "^" and pattern or ("^" .. pattern)
   return function(str)
@@ -21,27 +33,30 @@ local match = function(pattern)
         value = str:sub(1, finish),
         rest = str:sub(finish + 1)
       }
+      --else
+      --  return error("Could not find match for pattern " .. pattern)
     end
   end
-end
+end)
 
 local any = function(...)
+  local parsers = _t.map({ ... }, toLiteral)
+
   return function(str)
-    for _, combinator in ipairs(arg) do
+    for _, combinator in ipairs(parsers) do
       local result = combinator(str)
+
       if result then
-        result.any_match = combinator
         return result
       end
     end
   end
 end
 
-local optional = function(combinator)
+local optional = function(parser)
+  parser = toLiteral(parser)
   return function(str)
-    -- TODO: returning an empty string is awkward
-    return combinator(str) or {
-      value = "",
+    return parser(str) or {
       rest = str
     }
   end
@@ -54,6 +69,21 @@ local map = function(combinator, m)
       return m(result)
     end
   end
+end
+
+local concatenate = function(combinator)
+  return map(combinator, function(result)
+    local r = _t.clone(result)
+    local values = {}
+    for _, v in ipairs(result.values) do
+      if v.value ~= nil then
+        table.insert(values, v.value)
+      end
+    end
+    r.value = table.concat(values, "")
+    r.values = nil
+    return r
+  end)
 end
 
 local capture = function(name, key, combinator, m)
@@ -76,8 +106,9 @@ local captureValues = function(name, combinator)
 end
 
 
+-- TODO: don't need values array, but might require an unpack
 local sequence = function(...)
-  local combinators = { ... }
+  local combinators = _t.map({ ... }, toLiteral)
 
   return function(str)
     local rest = str
@@ -91,7 +122,7 @@ local sequence = function(...)
       end
 
       rest = result.rest
-      val[i] = result.value
+      val[i] = result
 
       for k, v in pairs(result.captures or {}) do
         captures[k] = v
@@ -99,7 +130,7 @@ local sequence = function(...)
     end
 
     return {
-      value = table.concat(val, ""),
+      --value = table.concat(val, ""),
       values = val,
       rest = rest,
       captures = captures
@@ -108,6 +139,8 @@ local sequence = function(...)
 end
 
 local nOrMore = function(n, combinator)
+  combinator = toLiteral(combinator)
+
   return function(str)
     local rest = str
     local matches = {}
@@ -115,7 +148,7 @@ local nOrMore = function(n, combinator)
     while true do
       local result = combinator(rest)
       if result then
-        table.insert(matches, result.value)
+        table.insert(matches, result)
         rest = result.rest
       else
         break
@@ -124,7 +157,7 @@ local nOrMore = function(n, combinator)
 
     if #matches > n then
       return {
-        value = table.concat(matches, ""),
+        --value = table.concat(matches, ""),
         values = matches,
         rest = rest
       }
@@ -133,30 +166,42 @@ local nOrMore = function(n, combinator)
 end
 
 local nOrMoreUnique = function(n, ...)
-  local combinators = { ... }
+  local combinators = _t.map({ ... }, toLiteral)
 
   return function(str)
     local rest = str
-    local values = {}
+    local results = {}
+    local captures = {}
 
     while rest ~= "" and #combinators > 0 do
-      local any_combinator = any(table.unpack(combinators))
-      local result = any_combinator(rest)
-      if result then
-        table.insert(values, result.value)
-        rest = result.rest
+      local success = false
+      for i, combinator in ipairs(combinators) do
+        local combinator_result = combinator(rest)
+        if combinator_result then
+          rest = combinator_result.rest
+          if combinator_result.captures then
+            for k, v in pairs(combinator_result.captures) do
+              captures[k] = v
+            end
+          end
+          table.insert(results, combinator_result)
+          table.remove(combinators, i)
+          success = true
 
-        local match_index = _t.find(combinators, result.any_match)
-        table.remove(combinators, match_index)
-      else
+          break
+        end
+      end
+
+      if not success then
         break
       end
     end
 
-    if #values >= n then
+    if #results >= n then
       return {
-        value = table.concat(values, ""),
-        values = values,
+        --value = table.concat(values, ""),
+        values = results,
+        captures = captures,
         rest = rest
       }
     end
@@ -164,14 +209,16 @@ local nOrMoreUnique = function(n, ...)
 end
 
 local between = function(left, right, middle)
+  left = toLiteral(left)
+  right = toLiteral(right)
   return map(
-    sequence(left, capture("between", middle), right),
+    sequence(left, middle, right),
     function(result)
-      -- TODO: do captures need to be passed?
-      return {
-        value = result.captures.between,
-        rest = result.rest
-      }
+      local r = _t.clone(result.values[2])
+      r.rest = result.rest
+      return r
+      --r.value = result.captures.between
+      --return r
     end
   )
 end
@@ -183,35 +230,58 @@ local nthValue = function(n, combinator)
       return
     end
 
-    local r = _t.clone(result)
-    r.value = r.values[n]
+    local r = _t.clone(result.values[n])
+    r.rest = result.rest
+
     return r
   end)
 end
 
-local ignore = function(combinator)
+local dropLeftValue = function(n, combinator)
+  return map(combinator, function(result)
+    if not result then
+      return
+    end
+    local values = {}
+    for i, v in ipairs(result.values) do
+      if i > n then
+        values[i - n] = v
+      end
+    end
+    local r = _t.clone(result)
+    r.values = values
+
+    return r
+  end)
+end
+
+local ignore = function(parser)
+  parser = toLiteral(parser)
   return function(str)
-    local result = combinator(str)
+    local result = parser(str)
     if result then
       return {
-        value = "",
         rest = result.rest
       }
     end
   end
 end
 
-local list = function(separator, comparator)
+local list = function(separator, parser)
+  separator = toLiteral(separator)
+  parser = toLiteral(parser)
+
   return map(
     sequence(
-      comparator,
-      optional(captureValues("list_items", nOrMore(0, sequence(ignore(separator), comparator)))),
-      optional(ignore(separator))
+      parser,
+      optional(nOrMore(0, nthValue(2, sequence(separator, parser)))),
+      optional(separator)
     ),
     function(result)
       local values = { result.values[1] }
-      if result.captures and result.captures.list_items then
-        for i, v in ipairs(result.captures.list_items) do
+
+      if _t.dig(result.values, 2, "values") then
+        for i, v in ipairs(result.values[2].values) do
           values[i + 1] = v
         end
       end
@@ -222,13 +292,17 @@ local list = function(separator, comparator)
   )
 end
 
+-- FIXME this will always break error location
 local stripWhitespace = function()
   return function(str)
     return {
-      value = "",
       rest = str:gsub("%s", "")
     }
   end
+end
+
+local skipWhitespace = function()
+  return ignore(match("^%s+"))
 end
 
 return {
@@ -236,6 +310,8 @@ return {
   between = between,
   capture = capture,
   captureValues = captureValues,
+  concatenate = concatenate,
+  dropLeftValue = dropLeftValue,
   ignore = ignore,
   list = list,
   literal = literal,

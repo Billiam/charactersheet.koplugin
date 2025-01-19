@@ -1,4 +1,4 @@
-local c = require("charsheet/lib/dice_parser/base_combinator")
+local c = require("charsheet/lib/dice_parser/combinators")
 local _t = require("charsheet/lib/table_util")
 local dump = require("charsheet/lib/dump")
 local P = require("charsheet/lib/dice_parser/parser")
@@ -18,7 +18,6 @@ end
 local digitsAsInt = P("integer", function()
   return c.map(digits(), toInt())
 end)
-
 
 local operator = P("operator", function()
   return c.any("+", "-", "*", "/")

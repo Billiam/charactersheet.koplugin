@@ -1,6 +1,7 @@
-local _c = require("charsheet/lib/dice_parser/base_combinator")
+local _c = require("charsheet/lib/dice_parser/combinators")
+local dump = require("charsheet/lib/dump")
 
-describe("base_combinator", function()
+describe("combinators", function()
   describe("literal", function()
     it("returns matching values", function()
       local foo = _c.literal("foo")
@@ -8,6 +9,7 @@ describe("base_combinator", function()
 
       assert.equal("foo", result.value)
       assert.equal("d truck", result.rest)
+      assert.equal("literal", result.parser)
     end)
 
     it("returns nil on failure", function()
@@ -25,6 +27,7 @@ describe("base_combinator", function()
 
       assert.equal("1234", result.value)
       assert.equal("abcd", result.rest)
+      assert.equal("match", result.parser)
     end)
 
     it("returns nil on failure", function()
@@ -52,7 +55,6 @@ describe("base_combinator", function()
 
       assert.equal("f", result.value)
       assert.equal("ruit", result.rest)
-      assert.equal(f, result.any_match)
     end)
 
     it("returns nil on failure", function()
@@ -76,8 +78,14 @@ describe("base_combinator", function()
       local optional_foo = _c.optional(_c.literal("foo"))
       local result = optional_foo("Delaware")
 
-      assert.equal("", result.value, "")
+      assert.is_nil(result.value)
       assert.equal("Delaware", result.rest)
+    end)
+
+    it("treats strings as parser literals", function()
+      local result = _c.optional("foo")("food truck")
+
+      assert.equal("foo", result.value)
     end)
   end)
 
@@ -234,29 +242,33 @@ describe("base_combinator", function()
 
   describe("sequence", function()
     it("matches when all combinators match", function()
-      local food = _c.sequence(_c.literal("f"), _c.literal("o"), _c.literal("o"), _c.literal("d"))
+      local food = _c.sequence(_c.literal("f"), _c.literal("o"), _c.literal("od"))
       local result = food("food truck")
 
-      assert.equal("food", result.value)
+      assert.equal("f", result.values[1].value)
+      assert.equal("o", result.values[2].value)
+      assert.equal("od", result.values[3].value)
+
       assert.equal(" truck", result.rest)
     end)
+
     it("only matches when combinators appear in the correct order", function()
       local food = _c.sequence(_c.literal("f"), _c.literal("o"), _c.literal("o"), _c.literal("d"))
       local result = food("fodo")
 
       assert.is_nil(result)
     end)
-    it("combines captures", function()
-      local food = _c.sequence(
-        _c.literal("f"),
-        _c.capture("o", _c.literal("o")),
-        _c.literal("o"),
-        _c.capture("d", _c.literal("d"))
-      )
 
+    it("treats strings like literal parsers", function()
+      local food = _c.sequence("f", "o", "od")
       local result = food("food truck")
-      assert.equal("o", result.captures.o)
-      assert.equal("d", result.captures.d)
+
+
+      assert.equal("f", result.values[1].value)
+      assert.equal("o", result.values[2].value)
+      assert.equal("od", result.values[3].value)
+
+      assert.equal(" truck", result.rest)
     end)
 
     it("returns nil on on failure", function()
@@ -272,9 +284,8 @@ describe("base_combinator", function()
       local repeats = _c.nOrMore(2, _c.sequence(_c.literal("a"), _c.literal("b")))
       local result = repeats("abababacacac")
 
-      assert.equal("ababab", result.value)
+      assert.equal(3, #result.values)
       assert.equal("acacac", result.rest)
-      assert.are.same({ "ab", "ab", "ab" }, result.values)
     end)
 
     it("must meet the minimum repeat count", function()
@@ -283,16 +294,31 @@ describe("base_combinator", function()
 
       assert.is_nil(result)
     end)
+
+    it("treats string parsers as literals", function()
+      local repeats = _c.nOrMore(2, "a")
+      local result = repeats("aaabbb")
+
+      assert.equal(3, #result.values)
+      assert.equal("bbb", result.rest)
+    end)
   end)
 
   describe("nOrMoreUnique", function()
     it("matches more than one repeat", function()
       local unique_repeats = _c.nOrMoreUnique(2, _c.literal("a"), _c.literal("b"), _c.literal("c"))
-      local result = unique_repeats("abcaca")
+      local result = unique_repeats("cbacba")
 
-      assert.equal("abc", result.value)
-      assert.equal("aca", result.rest)
-      assert.are.same({ "a", "b", "c" }, result.values)
+      assert.equal("cba", result.rest)
+      assert.equal(3, #result.values)
+    end)
+
+    it("treats strings as literal parsers", function()
+      local unique_repeats = _c.nOrMoreUnique(2, "a", "b", "c")
+      local result = unique_repeats("cbacba")
+
+      assert.equal("cba", result.rest)
+      assert.equal(3, #result.values)
     end)
 
     it("must meet the minimum repeat count", function()
@@ -323,28 +349,39 @@ describe("base_combinator", function()
   describe("list", function()
     it("matches repeated items", function()
       local comma_separated = _c.list(_c.literal(","), _c.match("%d+"))
-
       local result = comma_separated("21,42,53,")
-      assert.equal("214253", result.value)
-      assert.are.same({ "21", "42", "53" }, result.values)
+
+      assert.equal("21", result.values[1].value)
+      assert.equal("42", result.values[2].value)
+      assert.equal("53", result.values[3].value)
+
       assert.equal("", result.rest)
+    end)
+
+    it("treats strings as literal parsers", function()
+      local comma_separated = _c.list(",", "b")
+      local result = comma_separated("b,b,b")
+
+      assert.equal("b", result.values[1].value)
+      assert.equal("b", result.values[2].value)
+      assert.equal("b", result.values[3].value)
     end)
 
     it("the last delimiter is optional", function()
       local comma_separated = _c.list(_c.literal(","), _c.match("%d+"))
-
       local result = comma_separated("21,42,53")
-      assert.equal("214253", result.value)
-      assert.are.same({ "21", "42", "53" }, result.values)
+
+      assert.equal("21", result.values[1].value)
+      assert.equal("42", result.values[2].value)
+      assert.equal("53", result.values[3].value)
       assert.equal("", result.rest)
     end)
 
     it("matches a single value without a delimiter", function()
       local comma_separated = _c.list(_c.literal(","), _c.match("%d+"))
-
       local result = comma_separated("21")
-      assert.equal("21", result.value)
-      assert.are.same({ "21" }, result.values)
+
+      assert.equal("21", result.values[1].value)
       assert.equal("", result.rest)
     end)
   end)
@@ -360,8 +397,17 @@ describe("base_combinator", function()
 
       local ignored = _c.ignore(passthrough_combinator)
       local result = ignored("hello")
-      assert.equal("", result.value)
+
+      assert.is_nil(result.value)
       assert.equal("rest", result.rest)
+    end)
+
+    it("treats strings as literal parsers", function()
+      local ignored = _c.ignore("hell")
+      local result = ignored("hello")
+
+      assert.is_nil(result.value)
+      assert.equal("o", result.rest)
     end)
 
     it("return nil on failure", function()
@@ -377,7 +423,7 @@ describe("base_combinator", function()
       local values_combinator = function()
         return {
           value = "original_value",
-          values = { "a", "b", "c", "d" },
+          values = { { value = "a" }, { value = "b" } },
           rest = "rest"
         }
       end
@@ -401,7 +447,6 @@ describe("base_combinator", function()
       local strip = _c.stripWhitespace()
       local result = strip("a b c d ")
 
-      assert.equal("", result.value)
       assert.equal("abcd", result.rest)
     end)
   end)
