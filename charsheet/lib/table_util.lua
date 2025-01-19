@@ -33,12 +33,23 @@ function TableUtil.contains(t, value)
   return TableUtil.find(t, value) ~= nil
 end
 
-function TableUtil.find(t, value)
+function TableUtil.find(t, value, map)
   for i, v in ipairs(t) do
+    if map then
+      v = map(v)
+    end
     if value == v then
       return i
     end
   end
+end
+
+function TableUtil.map(t, cb)
+  local result = {}
+  for i, v in ipairs(t) do
+    result[i] = cb(v, i)
+  end
+  return result
 end
 
 return TableUtil
