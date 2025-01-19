@@ -217,6 +217,44 @@ describe("combinators", function()
     end)
   end)
 
+  describe("concatenate", function()
+    it("combines value properties", function()
+      local fixed_result = function()
+        return {
+          values = {
+            { value = "a" },
+            { value = "b" },
+            { value = "c" }
+          }
+        }
+      end
+
+      local concat = _c.concatenate(fixed_result)
+      local result = concat("")
+
+      assert.equal("abc", result.value)
+    end)
+  end)
+
+  describe("dropLeftValue", function()
+    it("removes the first values", function()
+      local fixed_result = function()
+        return {
+          values = {
+            { value = "a" },
+            { value = "b" },
+            { value = "c" }
+          },
+          rest = "more"
+        }
+      end
+      local drop = _c.dropLeftValue(2, fixed_result)
+      local result = drop("")
+
+      assert.are.same({ values = { { value = "c" } }, rest = "more" }, result)
+    end)
+  end)
+
   describe("map", function()
     it("modifies results on match", function()
       local reverse = function(result)
