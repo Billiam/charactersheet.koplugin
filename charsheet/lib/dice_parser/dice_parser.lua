@@ -311,6 +311,33 @@ local explode = P("explode", function()
   end)
 end)
 
+local reroll = P("reroll", function()
+  return c.map(c.dropLeftValue(1,
+    c.sequence(
+      "R",
+      c.between("{", "}",
+        c.list(",", numberInequality())
+      ),
+      c.capture("reroll_limit", c.optional(numberInequality()))
+    )
+  ), function(result)
+    local r = {
+      rest = result.rest,
+      reroll_conditions = {},
+      reroll_limit = result.captures.reroll_limit
+    }
+
+    for i, condition in ipairs(result.values[1].values) do
+      r.reroll_conditions[i] = {
+        operator = condition.inequality or "=",
+        value = condition.value
+      }
+    end
+
+    return r
+  end)
+end)
+
 local interpolation = function()
   return c.between(c.literal("{{"), c.literal("}}"), variables())
 end
@@ -333,6 +360,7 @@ return {
   drop = drop,
   explode = explode,
   keep = keep,
+  reroll = reroll,
   unique = unique,
   valueReplacement = valueReplacement,
 }

@@ -257,4 +257,17 @@ describe("dice", function()
       assert.is_nil(result)
     end)
   end)
+
+  describe("reroll", function()
+    it("matches reroll conditions", function()
+      local result = dice.reroll()("R{2,>5}2")
+
+      assert.equal("reroll", result.parser)
+      assert.equal(2, result.reroll_limit)
+      assert.are.same({
+        { value = 2, operator = "=" },
+        { value = 5, operator = ">" },
+      }, result.reroll_conditions)
+    end)
+  end)
 end)
