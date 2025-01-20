@@ -244,6 +244,27 @@ describe("dice", function()
       assert.equal(2, condition.roll.quantity)
     end)
 
+    it("explodes on a roll pattern", function()
+      local result = dice.explode()("!{(6,6,>5)}")
+
+      local condition = result.values[1]
+      assert.equal("pattern", condition.type)
+      assert.are.same({
+        {
+          value = 6,
+          operator = "="
+        },
+        {
+          value = 6,
+          operator = "="
+        },
+        {
+          value = 5,
+          operator = ">"
+        }
+      }, condition.values)
+    end)
+
     it("matches explode once", function()
       local result = dice.explode()("!!")
 

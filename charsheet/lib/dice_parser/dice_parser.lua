@@ -293,6 +293,23 @@ local explodeRerollCondition = P("explode_reroll_condition", function()
     end)
 end)
 
+local explodeRerollPattern = P("explode_reroll_pattern", function()
+  return c.map(c.between("(", ")",
+    c.list(",", numberInequality())
+  ), function(result)
+    return {
+      rest = result.rest,
+      type = "pattern",
+      values = _t.map(result.values, function(item)
+        return {
+          value = item.value,
+          operator = item.inequality or "="
+        }
+      end)
+    }
+  end)
+end)
+
 local explodeConditions = P("explode_conditions", function()
   -- when should captures be terminated?
   -- TODO allow full dice roll in replacement value instead of simple xdx roll
@@ -300,6 +317,7 @@ local explodeConditions = P("explode_conditions", function()
     c.list(",",
       c.any(
         explodeRerollCondition(),
+        explodeRerollPattern(),
         numberInequality()
       )
     )
@@ -329,15 +347,17 @@ local explode = P("explode", function()
 
     if condition.values then
       for i, cond in ipairs(condition.values) do
-        if cond.parser == "explode_reroll_condition" then
+        if cond.type == "roll" then
           r.values[i] = _t.clone(cond)
-          r.values[i].rest = nil
+        elseif cond.type == "pattern" then
+          r.values[i] = _t.clone(cond)
         else
           r.values[i] = {
             value = cond.value,
             operator = cond.inequality or "="
           }
         end
+        r.values[i].rest = nil
       end
     end
 
