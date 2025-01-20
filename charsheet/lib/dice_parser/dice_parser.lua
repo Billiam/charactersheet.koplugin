@@ -56,32 +56,65 @@ local keepCount = P("keep_count", function()
   return c.capture("keep_count", digitsAsInt())
 end)
 local keepHighest = P("keep_highest", function()
-  return c.sequence(c.literal("K"), c.optional(keepCount()))
+  return c.map(c.sequence(c.literal("K"), c.optional(keepCount())),
+    function(result)
+      return {
+        type = "keep",
+        high = result.captures and result.captures.keep_count or 1,
+        rest = result.rest
+      }
+    end
+  )
 end)
+
 local keepLowest = P("keep_lowest", function()
-  return c.sequence(c.literal("KL"), c.optional(keepCount()))
+  return c.map(c.sequence(c.literal("KL"), c.optional(keepCount())),
+    function(result)
+      return {
+        type = "keep",
+        low = result.captures and result.captures.keep_count or 1,
+        rest = result.rest
+      }
+    end
+  )
 end)
 local keepMiddle = P("keep_middle", function()
-  return c.sequence(c.literal("KM"), c.optional(keepCount()))
+  return c.map(c.sequence(c.literal("KM"), c.optional(keepCount())),
+    function(result)
+      return {
+        type = "keep",
+        middle = result.captures and result.captures.keep_count or 1,
+        rest = result.rest
+      }
+    end
+  )
 end)
+--
 local keep = P("keep", function()
-  return c.map(c.any(keepLowest(), keepMiddle(), keepHighest()), function(result)
-    return {
-      rest = result.rest,
-      keep = result.parser,
-      keep_count = _t.dig(result, "captures", "keep_count")
-    }
-  end)
+  return c.any(keepLowest(), keepMiddle(), keepHighest())
 end)
 
 local dropCount = P("drop_count", function()
   return c.capture("drop_count", digitsAsInt())
 end)
 local dropHighest = P("drop_highest", function()
-  return c.sequence(c.literal("H"), c.optional(dropCount()))
+  return c.map(c.sequence(c.literal("H"), c.optional(dropCount())), function(result)
+    return {
+      type = "drop",
+      high = result.captures and result.captures.drop_count or 1,
+      rest = result.rest
+    }
+  end)
 end)
+
 local dropLowest = P("drop_lowest", function()
-  return c.sequence(c.literal("L"), c.optional(dropCount()))
+  return c.map(c.sequence(c.literal("L"), c.optional(dropCount())), function(result)
+    return {
+      type = "drop",
+      low = result.captures and result.captures.drop_count or 1,
+      rest = result.rest
+    }
+  end)
 end)
 
 local dropRolls = P("drop_rolls", function()
@@ -99,38 +132,34 @@ end)
 
 local dropCondition = P("drop_condition", function()
   return c.map(
-    c.sequence(c.literal("D"), c.between("{", "}", dropRolls())),
+    c.dropLeftValue(1, c.sequence(c.literal("D"), c.between("{", "}", dropRolls()))),
     function(result)
       local r = _t.clone(result)
-      r.values = result.values[2].values
-
-      return r
+      return {
+        type = "drop",
+        rest = result.rest,
+        values = result.values[1].values
+      }
     end)
 end)
 
 local drop = P("drop", function()
-  return c.map(c.any(dropHighest(), dropLowest(), dropCondition()), function(result)
-    return {
-      rest = result.rest,
-      drop = result.parser,
-      drop_conditions = result.parser == "drop_condition" and result.values or nil,
-      drop_count = _t.dig(result, "captures", "drop_count")
-    }
-  end)
+  return c.any(dropHighest(), dropLowest(), dropCondition())
 end)
 
 local clamp = P("clamp", function()
   return c.map(c.dropLeftValue(1, c.sequence(c.ignore("C"), numberInequality(), c.optional(numberInequality()))),
     function(result)
-      local r = _t.clone(result)
-      r.clamp = {}
+      local r = {
+        rest = result.rest
+      }
 
       for _, condition in ipairs(result.values) do
         if condition.value then
           if condition.inequality:sub(1, 1) == ">" then
-            r.clamp.max = condition.value
+            r.max = condition.value
           else
-            r.clamp.min = condition.value
+            r.min = condition.value
           end
         end
       end
@@ -183,38 +212,40 @@ local valueReplacement = P("value_replacement", function()
           c.capture("condition", c.optional(c.any("<", ">"))),
           c.capture("value", digitsAsInt()),
           "=",
-          c.capture("replacement", replacementValue())
+          replacementValue()
         )
       )
     )
   )), function(result)
-    local r = _t.clone(result)
-    r.replacement = _t.map(result.values, function(replacement)
+    local r = {
+      rest = result.rest
+    }
+    r.values = _t.map(result.values, function(replacement)
       local parsed_replacement = replacement.values[4]
-      local replacement_value
+      local value = {
+        value = replacement.captures.value,
+        condition = replacement.captures.condition or "=",
+      }
+
       if parsed_replacement.type == "range" then
-        replacement_value = {
-          from = replacement.values[4].from,
-          to = replacement.values[4].to,
-          type = "random",
+        value.replacement = {
+          from = parsed_replacement.from,
+          to = parsed_replacement.to,
         }
+        value.type = "range"
       elseif parsed_replacement.type == "die" then
-        replacement_value = {
-          type = "roll",
+        value.replacement = {
           sides = replacement.captures.sides,
           quantity = replacement.captures.quantity
         }
+        value.type = "roll"
       else
-        replacement_value = replacement.captures.replacement
+        value.replacement = parsed_replacement.value
+        value.type = "value"
       end
 
-      return {
-        value = replacement.captures.value,
-        replacement = replacement_value,
-        condition = replacement.captures.condition or "=",
-      }
+      return value
     end)
-    r.captures = nil
 
     return r
   end)
@@ -223,16 +254,17 @@ end)
 local unique = P("unique", function()
   return c.map(c.sequence(c.literal("U"),
     c.optional(c.between("{", "}",
-      c.list(",", digitsAsInt())
+      c.list(",", numberInequality())
     ))), function(result)
-    local r = _t.clone(result)
-    r.unique = {}
+    local r = {
+      rest = result.rest,
+      values = {}
+    }
     if result.values[2].values then
       for i, v in ipairs(result.values[2].values) do
-        r.unique[i] = v.value
+        r.values[i] = { value = v.value, operator = v.inequality or "=" }
       end
     end
-    r.values = nil
     return r
   end)
 end)
@@ -249,10 +281,14 @@ local explodeRerollCondition = P("explode_reroll_condition", function()
       return {
         rest = result.rest,
         type = "roll",
+        -- todo: from roll parser directly
+        roll = {
+          sides = result.captures.sides,
+          quantity = result.captures.quantity
+        },
         value = result.captures.value,
         operator = result.captures.operator,
-        sides = result.captures.sides,
-        quantity = result.captures.quantity
+
       }
     end)
 end)
@@ -280,11 +316,13 @@ local explodeReduced = P("explode_reduced", function()
   return c.dropLeftValue(1, c.sequence("!!!", c.optional(explodeConditions()), c.optional(digitsAsInt())))
 end)
 
+-- TODO: pattern explosion
+-- TODO: explosion without disregarding operator(".")
 local explode = P("explode", function()
   return c.map(c.any(explodeReduced(), explodeOnce(), explodeMany()), function(result)
     local r = {
-      explode = {},
-      explode_type = result.parser,
+      type = result.parser,
+      values = {},
       rest = result.rest
     }
     local condition = result.values[1]
@@ -292,9 +330,10 @@ local explode = P("explode", function()
     if condition.values then
       for i, cond in ipairs(condition.values) do
         if cond.parser == "explode_reroll_condition" then
-          r.explode[i] = _t.clone(cond)
+          r.values[i] = _t.clone(cond)
+          r.values[i].rest = nil
         else
-          r.explode[i] = {
+          r.values[i] = {
             value = cond.value,
             operator = cond.inequality or "="
           }
@@ -303,7 +342,7 @@ local explode = P("explode", function()
     end
 
     if result.values[2].value then
-      r.explode_count = result.values[2].value
+      r.quantity = result.values[2].value
     end
 
     return r
@@ -322,12 +361,12 @@ local reroll = P("reroll", function()
   ), function(result)
     local r = {
       rest = result.rest,
-      reroll_conditions = {},
-      reroll_limit = result.captures.reroll_limit
+      values = {},
+      limit = result.captures.reroll_limit
     }
 
     for i, condition in ipairs(result.values[1].values) do
-      r.reroll_conditions[i] = {
+      r.values[i] = {
         operator = condition.inequality or "=",
         value = condition.value
       }
@@ -348,11 +387,12 @@ local count = P("count", function()
   ), function(result)
     local r = {
       rest = result.rest,
-      count = {},
+      values = {},
     }
+
     if result.values[1].values then
       for i, condition in ipairs(result.values[1].values) do
-        r.count[i] = {
+        r.values[i] = {
           operator = condition.inequality or "=",
           value = condition.value
         }
@@ -367,15 +407,42 @@ local interpolation = function()
   return c.between(c.literal("{{"), c.literal("}}"), variables())
 end
 
+
 local dieModifier = P("modifiers", function()
-  return c.nOrMoreUnique(0,
-    c.capture("keep", keep()),
-    c.capture("drop", drop()),
-    c.capture("explode", explode()),
-    c.capture("clamp", clamp()),
-    c.unique("unique", unique()),
-    c.capture("value_replacement", valueReplacement())
-  )
+  return c.map(c.nOrMoreUnique(0,
+    clamp(),
+    count(),
+
+    --keep(),
+    --drop(),
+    keepLowest(),
+    keepMiddle(),
+    keepHighest(),
+
+
+    dropLowest(),
+    dropHighest(),
+    dropCondition(),
+
+    explode(),
+    reroll(),
+    unique(),
+    valueReplacement()
+  ), function(result)
+    local r = {
+      rest = result.rest,
+    }
+    local merge_keys = { "drop", "keep", "explode", "clamp", "unique", "count", "reroll", "value_replacement" }
+    for _, modifier in ipairs(result.values) do
+      for _, key in ipairs(merge_keys) do
+        if modifier.type == key or modifier.parser == key then
+          r[key] = _t.merge(r[key] or {}, modifier)
+        end
+      end
+    end
+
+    return r
+  end)
 end)
 
 return {
@@ -383,9 +450,18 @@ return {
   count = count,
   die = die,
   dieModifier = dieModifier,
+
   drop = drop,
-  explode = explode,
+  dropHighest = dropHighest,
+  dropLowest = dropLowest,
+  dropCondition = dropCondition,
+
   keep = keep,
+  keepHighest = keepHighest,
+  keepMiddle = keepMiddle,
+  keepLowest = keepLowest,
+
+  explode = explode,
   reroll = reroll,
   unique = unique,
   valueReplacement = valueReplacement,

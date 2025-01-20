@@ -197,7 +197,6 @@ local nOrMoreUnique = function(n, ...)
 
     if #results >= n then
       return {
-        --value = table.concat(values, ""),
         values = results,
         captures = captures,
         rest = rest

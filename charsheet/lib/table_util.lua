@@ -83,6 +83,18 @@ local function dump(value, call_indent)
   return output
 end
 
+function TableUtil.merge(t1, t2, deep)
+  local result = TableUtil.clone(t1)
+  for k, v in pairs(t2) do
+    if deep and t1[k] then
+      result[k] = TableUtil.merge(t1[k], v)
+    else
+      result[k] = v
+    end
+  end
+  return result
+end
+
 function TableUtil.dump(table, print_output)
   if print_output == false then
     return dump(table)
