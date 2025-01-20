@@ -153,7 +153,7 @@ local nOrMore = function(n, parser)
       end
     end
 
-    if #matches > n then
+    if #matches >= n then
       return {
         --value = table.concat(matches, ""),
         values = matches,
