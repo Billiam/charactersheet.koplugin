@@ -134,7 +134,6 @@ local sequence = function(...)
     end
 
     return {
-      --value = table.concat(val, ""),
       values = val,
       rest = rest,
       captures = captures

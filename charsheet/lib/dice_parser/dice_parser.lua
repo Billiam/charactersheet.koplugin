@@ -525,7 +525,7 @@ end
 local arithmetic = function(name, type, operator)
   return P(name, function()
     return c.map(c.sequence(type(), c.nOrMore(1, appendMath(operator, type))), function(result)
-      return {
+      local r = {
         type = result.parser,
         rest = result.rest,
         values = {
@@ -533,9 +533,12 @@ local arithmetic = function(name, type, operator)
             operator = "+",
             value = result.values[1]
           },
-          table.unpack(result.values[2].values)
         }
       }
+      for i, v in ipairs(result.values[2].values) do
+        r.values[i + 1] = v
+      end
+      return r
     end)
   end)
 end
