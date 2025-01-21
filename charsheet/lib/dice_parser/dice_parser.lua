@@ -324,15 +324,20 @@ local explodeConditions = P("explode_conditions", function()
   )
 end)
 
-local explodeMany = P("explode_many", function()
-  return c.dropLeftValue(1, c.sequence("!", c.optional(explodeConditions()), c.optional(digitsAsInt())))
-end)
-local explodeOnce = P("explode_once", function()
-  return c.dropLeftValue(1, c.sequence("!!", c.optional(explodeConditions()), c.optional(digitsAsInt())))
-end)
-local explodeReduced = P("explode_reduced", function()
-  return c.dropLeftValue(1, c.sequence("!!!", c.optional(explodeConditions()), c.optional(digitsAsInt())))
-end)
+local buildExplosionParser = function(name, prefix)
+  return P(name, function()
+    return c.dropLeftValue(1, c.sequence(
+      prefix,
+      c.optional(explodeConditions()),
+      c.optional(digitsAsInt()),
+      c.optional(".")
+    ))
+  end)
+end
+
+local explodeMany = buildExplosionParser("explode_many", "!")
+local explodeOnce = buildExplosionParser("explode_once", "!!")
+local explodeReduced = buildExplosionParser("explode_reduced", "!!!")
 
 -- TODO: pattern explosion
 -- TODO: explosion without disregarding operator(".")
