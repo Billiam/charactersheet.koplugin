@@ -18,10 +18,6 @@ local digitsAsInt = P("integer", function()
   return c.map(digits(), toInt())
 end)
 
-local operator = P("operator", function()
-  return c.any("+", "-", "*", "/")
-end)
-
 local inequality = P("inequality", function()
   return c.concatenate(
     c.sequence(
@@ -45,11 +41,17 @@ local numberInequality = P("number_inequality", function()
 end)
 
 local die = P("die", function()
-  return c.sequence(
-    c.capture("quantity", digitsAsInt()),
+  return c.map(c.sequence(
+    c.optional(c.capture("quantity", digitsAsInt())),
     c.literal("d"),
     c.capture("sides", digitsAsInt())
-  )
+  ), function(result)
+    return {
+      rest = result.rest,
+      quantity = result.captures.quantity or 1,
+      sides = result.captures.sides,
+    }
+  end)
 end)
 
 local keepCount = P("keep_count", function()
@@ -192,13 +194,7 @@ local range = P("range", function()
 end)
 
 local replacementValue = P("replacement_value", function()
-  -- when should captures be terminated?
-  -- TODO allow full dice roll in replacement value instead of simple xdx roll
-  return c.map(c.any(range(), digitsAsInt(), c.between("[", "]", die())), function(result)
-    -- any combinator returns the inner result, and then the parser will be lost
-    result.type = result.parser
-    return result
-  end)
+  return c.any(range(), digitsAsInt(), c.between("[", "]", die()))
 end)
 
 -- TODO allow string value replacements
@@ -235,8 +231,8 @@ local valueReplacement = P("value_replacement", function()
         value.type = "range"
       elseif parsed_replacement.type == "die" then
         value.replacement = {
-          sides = replacement.captures.sides,
-          quantity = replacement.captures.quantity
+          sides = parsed_replacement.sides,
+          quantity = parsed_replacement.quantity
         }
         value.type = "roll"
       else
@@ -278,13 +274,14 @@ local explodeRerollCondition = P("explode_reroll_condition", function()
         die()
       )
     ), function(result)
+      local roll = result.values[3]
       return {
         rest = result.rest,
         type = "roll",
         -- todo: from roll parser directly
         roll = {
-          sides = result.captures.sides,
-          quantity = result.captures.quantity
+          sides = roll.sides,
+          quantity = roll.quantity
         },
         value = result.captures.value,
         operator = result.captures.operator,
@@ -344,7 +341,7 @@ local explodeReduced = buildExplosionParser("explode_reduced", "!!!")
 local explode = P("explode", function()
   return c.map(c.any(explodeReduced(), explodeOnce(), explodeMany()), function(result)
     local r = {
-      type = result.parser,
+      type = result.type,
       values = {},
       rest = result.rest
     }
@@ -438,8 +435,6 @@ local dieModifier = P("modifiers", function()
     clamp(),
     count(),
 
-    --keep(),
-    --drop(),
     keepLowest(),
     keepMiddle(),
     keepHighest(),
@@ -470,11 +465,104 @@ local dieModifier = P("modifiers", function()
   end)
 end)
 
+local dieRoll = P("die_roll", function()
+  return c.map(c.sequence(die(), c.optional(dieModifier())), function(result)
+    local r = _t.clone(result.values[1])
+    r.modifiers = result.values[2]
+    r.rest = result.rest
+    return r
+  end)
+end)
+
+local lazyParser = function(parser)
+  local p
+  return function(str)
+    if not p then
+      p = parser()
+    end
+
+    return p(str)
+  end
+end
+
+local value = P("value", function()
+  return c.any(dieRoll(), digitsAsInt())
+end)
+
+local negatedValue = P("negated_value", function()
+  return c.map(c.sequence("-", value()), function(result)
+    local r = _t.clone(result.values[2])
+    r.rest = result.rest
+    r.negate = true
+    return r
+  end)
+end)
+local signedValue = P("signed_value", function()
+  return c.any(negatedValue(), value())
+end)
+local multiplicationOperator = P("multiplication_operator", function()
+  return c.any("*", "/")
+end)
+local additionOperator = P("addition_operator", function()
+  return c.any("+", "-")
+end)
+
+local lazyParenExpression
+local factor = function()
+  return c.any(signedValue(), lazyParenExpression())
+end
+
+local appendMath = function(operator, type)
+  return c.map(c.sequence(operator(), type()), function(result)
+    return {
+      rest = result.rest,
+      operator = result.values[1].value,
+      value = result.values[2]
+    }
+  end)
+end
+
+local arithmetic = function(name, type, operator)
+  return P(name, function()
+    return c.map(c.sequence(type(), c.nOrMore(1, appendMath(operator, type))), function(result)
+      return {
+        type = result.parser,
+        rest = result.rest,
+        values = {
+          {
+            operator = "+",
+            value = result.values[1]
+          },
+          table.unpack(result.values[2].values)
+        }
+      }
+    end)
+  end)
+end
+local multiplication = arithmetic("multiplication", factor, multiplicationOperator)
+local term = function()
+  return c.any(multiplication(), factor())
+end
+local addition = arithmetic("addition", term, additionOperator)
+local expression = function()
+  return c.any(addition(), term())
+end
+local parenExpression = function()
+  return c.between("(", ")", expression())
+end
+lazyParenExpression = function()
+  return lazyParser(parenExpression)
+end
+local multipleExpressions = P("multiple_expressions", function()
+  return c.list(",", expression())
+end)
+
 return {
   clamp = clamp,
   count = count,
   die = die,
   dieModifier = dieModifier,
+  dieRoll = dieRoll,
 
   drop = drop,
   dropHighest = dropHighest,
@@ -490,4 +578,7 @@ return {
   reroll = reroll,
   unique = unique,
   valueReplacement = valueReplacement,
+
+  expression = expression,
+  multipleExpressions = multipleExpressions
 }

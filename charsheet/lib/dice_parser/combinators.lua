@@ -46,7 +46,13 @@ local any = function(...)
       local result = parser(str)
 
       if result then
-        return result
+        if result.type then
+          return result
+        else
+          local r = _t.clone(result)
+          r.type = r.parser
+          return r
+        end
       end
     end
   end
@@ -214,8 +220,6 @@ local between = function(left, right, middle)
       local r = _t.clone(result.values[2])
       r.rest = result.rest
       return r
-      --r.value = result.captures.between
-      --return r
     end
   )
 end

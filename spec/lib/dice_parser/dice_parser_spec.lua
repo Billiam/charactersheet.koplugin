@@ -389,4 +389,97 @@ describe("dice", function()
       assert.equal("", result.rest)
     end)
   end)
+
+  describe("die", function()
+    it("matches dice rolls", function()
+      local result = dice.die()("2d20")
+
+      assert.equal("die", result.parser)
+      assert.equal("", result.rest)
+      assert.equal(2, result.quantity)
+      assert.equal(20, result.sides)
+    end)
+    it("quantity is optional", function()
+      local result = dice.die()("d6")
+
+      assert.equal("die", result.parser)
+      assert.equal("", result.rest)
+      assert.equal(1, result.quantity)
+      assert.equal(6, result.sides)
+    end)
+  end)
+
+  describe("dieRoll", function()
+    it("matches rolls and modifiers", function()
+      local result = dice.dieRoll()("2d20H")
+
+      assert.equal(1, result.modifiers.drop.high)
+      assert.equal(2, result.quantity)
+      assert.equal(20, result.sides)
+    end)
+  end)
+
+  describe("expression", function()
+    it("parses basic arithmatic", function()
+      local result = dice.expression()("1-2+3")
+
+      assert.equal("addition", result.parser)
+      assert.equal("+", result.values[1].operator)
+      assert.equal(1, result.values[1].value.value)
+      assert.equal("-", result.values[2].operator)
+      assert.equal(2, result.values[2].value.value)
+      assert.equal("+", result.values[3].operator)
+      assert.equal(3, result.values[3].value.value)
+      assert.equal("", result.rest)
+    end)
+    it("supports parentheses", function()
+      local result = dice.expression()("1-(2+3)")
+
+      assert.equal("addition", result.parser)
+      assert.equal("+", result.values[1].operator)
+      assert.equal(1, result.values[1].value.value)
+      assert.equal("-", result.values[2].operator)
+
+      local inner = result.values[2].value
+
+      assert.equal("addition", inner.parser)
+      assert.equal("+", inner.values[1].operator)
+      assert.equal(2, inner.values[1].value.value)
+      assert.equal("+", inner.values[2].operator)
+      assert.equal(3, inner.values[2].value.value)
+
+      assert.equal("", result.rest)
+    end)
+    it("multiplication has higher precedence", function()
+      local result = dice.expression()("1-2*3")
+
+      assert.equal("addition", result.parser)
+      assert.equal("+", result.values[1].operator)
+      assert.equal(1, result.values[1].value.value)
+      assert.equal("-", result.values[2].operator)
+
+      local inner = result.values[2].value
+
+      assert.equal("multiplication", inner.parser)
+      assert.equal("+", inner.values[1].operator)
+      assert.equal(2, inner.values[1].value.value)
+      assert.equal("*", inner.values[2].operator)
+      assert.equal(3, inner.values[2].value.value)
+
+      assert.equal("", result.rest)
+    end)
+
+    it("parses dice rolls", function()
+      local result = dice.expression()("d6+1")
+
+      assert.equal("addition", result.parser)
+      assert.equal("die_roll", result.values[1].value.type)
+      assert.equal(1, result.values[1].value.quantity)
+      assert.equal(6, result.values[1].value.sides)
+
+      assert.equal("+", result.values[2].operator)
+      assert.equal(1, result.values[2].value.value)
+      assert.equal("", result.rest)
+    end)
+  end)
 end)

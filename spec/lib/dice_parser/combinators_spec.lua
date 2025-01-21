@@ -62,6 +62,13 @@ describe("combinators", function()
 
       assert.is_nil(result)
     end)
+
+    it("appends parser to type values", function()
+      local result = _c.any("a", "b")("banana")
+
+      assert.equal("literal", result.parser)
+      assert.equal("literal", result.type)
+    end)
   end)
 
   describe("optional", function()
