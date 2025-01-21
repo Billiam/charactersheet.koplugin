@@ -7,96 +7,130 @@ describe("dice", function()
     it("matches keep highest", function()
       local result = dice.keep()("K")
 
-      assert.equal("keep", result.type)
-      assert.equal(1, result.high)
+      assert.includes({
+        rest = "",
+        parser = "keep",
+        high = 1
+      }, result)
     end)
 
     it("matches keep highest with count", function()
       local result = dice.keep()("K3")
 
-      assert.equal("keep", result.type)
-      assert.equal(3, result.high)
+      assert.includes({
+        rest = "",
+        parser = "keep",
+        high = 3
+      }, result)
     end)
 
     it("matches keep lowest", function()
       local result = dice.keep()("KL")
-      assert.equal("keep", result.type)
-      assert.equal(1, result.low)
+
+      assert.includes({
+        rest = "",
+        parser = "keep",
+        low = 1
+      }, result)
     end)
 
     it("matches keep lowest with count", function()
       local result = dice.keep()("KL3")
 
-      assert.equal("keep", result.type)
-      assert.equal(3, result.low)
+      assert.includes({
+        rest = "",
+        parser = "keep",
+        low = 3
+      }, result)
     end)
 
     it("matches keep middle", function()
       local result = dice.keep()("KM")
 
-      assert.equal("keep", result.type)
-      assert.equal(1, result.middle)
+      assert.includes({
+        rest = "",
+        parser = "keep",
+        middle = 1
+      }, result)
     end)
 
     it("matches keep middle with count", function()
       local result = dice.keep()("KM3")
 
-      assert.equal("keep", result.type)
-      assert.equal(3, result.middle)
+      assert.includes({
+        rest = "",
+        parser = "keep",
+        middle = 3
+      }, result)
     end)
   end)
 
   describe("drop", function()
     it("matches drop highest", function()
       local result = dice.drop()("H")
-
-      assert.equal("drop", result.type)
-      assert.equal(1, result.high)
+      assert.includes({
+        rest = "",
+        parser = "drop",
+        high = 1
+      }, result)
     end)
 
     it("matches drop highest with count", function()
       local result = dice.drop()("H3")
-
-      assert.equal("drop", result.type)
-      assert.equal(3, result.high)
+      assert.includes({
+        rest = "",
+        parser = "drop",
+        high = 3
+      }, result)
     end)
 
     it("matches drop lowest", function()
       local result = dice.drop()("L")
 
-      assert.equal("drop", result.type)
-      assert.equal(1, result.low)
+      assert.includes({
+        rest = "",
+        parser = "drop",
+        low = 1
+      }, result)
     end)
 
     it("matches drop lowest with count", function()
       local result = dice.drop()("L3")
 
       assert.equal("drop", result.type)
-      assert.equal(3, result.low)
+      assert.includes({
+        rest = "",
+        parser = "drop",
+        low = 3
+      }, result)
     end)
 
     describe("drop conditionally", function()
       it("returns drop conditions", function()
         local result = dice.drop()("D{<3}")
 
-        assert.equal("drop", result.type)
-        assert.are.same({
-          { value = 3, operator = "<" }
-        }, result.values)
+        assert.includes({
+          rest = "",
+          parser = "drop",
+          values = {
+            { value = 3, operator = "<" }
+          }
+        }, result)
       end)
 
       it("returns multiple drop conditions", function()
         local result = dice.drop()("D{<2,4,>5,>=6}")
 
-        assert.equal("drop", result.type)
-        assert.are.same(
-          {
+        assert.includes({
+          rest = "",
+          parser = "drop",
+          values = {
             { value = 2, operator = "<" },
             { value = 4, operator = "=" },
             { value = 5, operator = ">" },
             { value = 6, operator = ">=" }
-          },
-          result.values)
+          }
+        }, result)
       end)
     end)
   end)
@@ -105,23 +139,32 @@ describe("dice", function()
     it("returns minimum clamp conditions", function()
       local result = dice.clamp()("C<2")
 
-      assert.equal("clamp", result.parser)
-      assert.equal(2, result.min)
+      assert.includes({
+        rest = "",
+        parser = "clamp",
+        min = 2,
+      }, result)
     end)
 
     it("returns maximum clamp conditions", function()
       local result = dice.clamp()("C>5")
 
-      assert.equal("clamp", result.parser)
-      assert.equal(5, result.max)
+      assert.includes({
+        rest = "",
+        parser = "clamp",
+        max = 5
+      }, result)
     end)
 
     it("returns range clamp conditions", function()
       local result = dice.clamp()("C<2>5")
 
-      assert.equal("clamp", result.parser)
-      assert.equal(2, result.min)
-      assert.equal(5, result.max)
+      assert.includes({
+        rest = "",
+        parser = "clamp",
+        min = 2,
+        max = 5
+      }, result)
     end)
   end)
 
@@ -137,8 +180,13 @@ describe("dice", function()
     it("returns non-rerolled conditions", function()
       local result = dice.unique()("U{5}")
 
-      assert.equal("unique", result.parser)
-      assert.are.same({ { value = 5, operator = "=" } }, result.values)
+      assert.includes({
+        rest = "",
+        parser = "unique",
+        values = {
+          { value = 5, operator = "=" }
+        }
+      }, result)
     end)
   end)
 
@@ -146,35 +194,36 @@ describe("dice", function()
     it("returns a direct value map", function()
       local result = dice.valueReplacement()("V{4=6,5=6}")
 
-      assert.equal("value_replacement", result.parser)
-      assert.are.same(
-        {
+      assert.includes({
+        rest = "",
+        parser = "value_replacement",
+        values = {
           { value = 4, type = "value", replacement = 6, condition = "=" },
           { value = 5, type = "value", replacement = 6, condition = "=" }
-        },
-        result.values
-      )
+        }
+      }, result)
     end)
 
     it("returns ranged value map", function()
       local result = dice.valueReplacement()("V{<5=0,>15=20}")
 
-      assert.equal("value_replacement", result.parser)
-      assert.are.same(
-        {
+      assert.includes({
+        rest = "",
+        parser = "value_replacement",
+        values = {
           { value = 5,  type = "value", replacement = 0,  condition = "<" },
           { value = 15, type = "value", replacement = 20, condition = ">" }
-        },
-        result.values
-      )
+        }
+      }, result)
     end)
 
     it("replaces values with random ranges", function()
       local result = dice.valueReplacement()("V{>5=10..20}")
 
-      assert.equal("value_replacement", result.parser)
-      assert.are.same(
-        {
+      assert.includes({
+        rest = "",
+        parser = "value_replacement",
+        values = {
           {
             value = 5,
             condition = ">",
@@ -184,17 +233,17 @@ describe("dice", function()
               to = 20
             }
           }
-        },
-        result.values
-      )
+        }
+      }, result)
     end)
 
     it("replaces values with new rolls", function()
       local result = dice.valueReplacement()("V{>5=[2d6]}")
 
-      assert.equal("value_replacement", result.parser)
-      assert.are.same(
-        {
+      assert.includes({
+        rest = "",
+        parser = "value_replacement",
+        values = {
           {
             value = 5,
             condition = ">",
@@ -204,9 +253,8 @@ describe("dice", function()
               sides = 6
             }
           }
-        },
-        result.values
-      )
+        }
+      }, result)
     end)
   end)
 
@@ -214,70 +262,91 @@ describe("dice", function()
     it("matches explosion", function()
       local result = dice.explode()("!")
 
-      assert.equal("explode", result.parser)
-      assert.equal("explode_many", result.type)
+      assert.includes({
+        rest = "",
+        parser = "explode",
+        type = "explode_many",
+      }, result)
       assert.are.same({}, result.values)
     end)
 
     it("explodes extra dice", function()
       local result = dice.explode()("!3")
 
-      assert.equal(3, result.quantity)
+      assert.includes({
+        rest = "",
+        quantity = 3
+      }, result)
     end)
 
     it("explodes on selectable values", function()
       local result = dice.explode()("!{<2,6}")
 
-      assert.are.same({ value = 2, operator = "<" }, result.values[1])
-      assert.are.same({ value = 6, operator = "=" }, result.values[2])
+      assert.includes({
+        rest = "",
+        values = {
+          { value = 2, operator = "<" },
+          { value = 6, operator = "=" }
+        }
+      }, result)
     end)
 
     it("explodes with a new roll", function()
       local result = dice.explode()("!{20=[2d6]}")
 
-      local condition = result.values[1]
-      assert.equal("roll", condition.type)
-      assert.equal(20, condition.value)
-      assert.equal("=", condition.operator)
-
-      assert.equal(6, condition.roll.sides)
-      assert.equal(2, condition.roll.quantity)
+      assert.includes({
+        rest = "",
+        values = {
+          {
+            type = "roll",
+            value = 20,
+            operator = "=",
+            roll = {
+              sides = 6,
+              quantity = 2
+            }
+          }
+        }
+      }, result)
     end)
 
     it("explodes on a roll pattern", function()
       local result = dice.explode()("!{(6,6,>5)}")
 
-      local condition = result.values[1]
-      assert.equal("pattern", condition.type)
-      assert.are.same({
-        {
-          value = 6,
-          operator = "="
-        },
-        {
-          value = 6,
-          operator = "="
-        },
-        {
-          value = 5,
-          operator = ">"
+      assert.includes({
+        rest = "",
+        values = {
+          {
+            type = "pattern",
+            values = {
+              { value = 6, operator = "=" },
+              { value = 6, operator = "=" },
+              { value = 5, operator = ">" }
+            }
+          }
         }
-      }, condition.values)
+      }, result)
     end)
 
     it("matches explode once", function()
       local result = dice.explode()("!!")
 
-      assert.equal("explode", result.parser)
-      assert.equal("explode_once", result.type)
+      assert.includes({
+        rest = "",
+        parser = "explode",
+        type = "explode_once",
+      }, result)
       assert.are.same({}, result.values)
     end)
 
     it("matches reducing explosion", function()
       local result = dice.explode()("!!!")
 
-      assert.equal("explode", result.parser)
-      assert.equal("explode_reduced", result.type)
+      assert.includes({
+        rest = "",
+        parser = "explode",
+        type = "explode_reduced",
+      }, result)
       assert.are.same({}, result.values)
     end)
 
@@ -292,12 +361,15 @@ describe("dice", function()
     it("matches reroll conditions", function()
       local result = dice.reroll()("R{2,>5}2")
 
-      assert.equal("reroll", result.parser)
-      assert.equal(2, result.limit)
-      assert.are.same({
-        { value = 2, operator = "=" },
-        { value = 5, operator = ">" },
-      }, result.values)
+      assert.includes({
+        rest = "",
+        parser = "reroll",
+        limit = 2,
+        values = {
+          { value = 2, operator = "=" },
+          { value = 5, operator = ">" },
+        }
+      }, result)
     end)
   end)
 
@@ -305,18 +377,24 @@ describe("dice", function()
     it("matches count", function()
       local result = dice.count()("#")
 
-      assert.equal("count", result.parser)
+      assert.includes({
+        rest = "",
+        parser = "count",
+      }, result)
       assert.are.same({}, result.values)
     end)
 
     it("supports count conditions", function()
       local result = dice.count()("#{<4,5}")
 
-      assert.equal("count", result.parser)
-      assert.are.same({
-        { value = 4, operator = "<" },
-        { value = 5, operator = "=" },
-      }, result.values)
+      assert.includes({
+        rest = "",
+        parser = "count",
+        values = {
+          { value = 4, operator = "<" },
+          { value = 5, operator = "=" },
+        }
+      }, result)
     end)
   end)
 
@@ -324,69 +402,70 @@ describe("dice", function()
     it("matches complex modifiers", function()
       local result = dice.dieModifier()("KL3H3L2D{<4}!{4,20=[2d8]}C<2U{5}#{<2,5}R{2}3V{>5=[2d6]}")
 
-      assert.equal("", result.rest)
-      assert.equal("modifiers", result.parser)
-
-      --drop
-      assert.equal(3, result.drop.high)
-      assert.equal(2, result.drop.low)
-      assert.are.same({ { operator = "<", value = 4 } }, result.drop.values)
-
-      --keep
-      assert.equal(3, result.keep.low)
-      --clamp
-      assert.equal(2, result.clamp.min)
-      --unique
-      assert.are.same({ { value = 5, operator = "=" } }, result.unique.values)
-      --count
-      assert.are.same({ { value = 2, operator = "<" }, { value = 5, operator = "=" } }, result.count.values)
-
-      -- reroll
-      assert.equal(3, result.reroll.limit)
-      assert.are.same({ { value = 2, operator = "=" } }, result.reroll.values)
-
-      -- value replacement
-      assert.are.same({
-          {
-            value = 5,
-            type = "roll",
-            replacement = {
-              sides = 6,
-              quantity = 2
-            },
-            condition = ">"
+      assert.includes({
+        rest = "",
+        parser = "modifiers",
+        drop = {
+          high = 3,
+          low = 2,
+          values = {
+            { operator = "<", value = 4, }
           }
         },
-        result.value_replacement.values)
-
-      -- explode
-      local explode_expected = {
-        type = "explode_many",
-        parser = "explode",
-        values = {
-          { value = 4, operator = "=" },
-          {
-            type = "roll",
-            value = 20,
-            operator = "=",
-            roll = {
-              quantity = 2,
-              sides = 8,
+        keep = {
+          low = 3
+        },
+        clamp = {
+          min = 2
+        },
+        unique = {
+          values = {
+            { operator = "=", value = 5 }
+          }
+        },
+        count = {
+          values = {
+            { value = 2, operator = "<" },
+            { value = 5, operator = "=" },
+          }
+        },
+        reroll = {
+          limit = 3,
+          values = {
+            { value = 2, operator = "=" }
+          }
+        },
+        value_replacement = {
+          values = {
+            {
+              value = 5,
+              type = "roll",
+              replacement = {
+                sides = 6,
+                quantity = 2
+              },
+              condition = ">"
+            }
+          }
+        },
+        explode = {
+          type = "explode_many",
+          parser = "explode",
+          values = {
+            { value = 4, operator = "=" },
+            {
+              type = "roll",
+              value = 20,
+              operator = "=",
+              roll = {
+                quantity = 2,
+                sides = 8,
+              }
             }
           }
         }
-      }
-      -- remove values we do don't care about for easier compare
-      result.explode.rest = nil
-      result.explode.values = _t.map(result.explode.values, function(item)
-        item.rest = nil
-        item.parser = nil
-        return item
-      end)
 
-      assert.are.same(explode_expected, result.explode)
-
-      assert.equal("", result.rest)
+      }, result)
     end)
   end)
 
@@ -394,18 +473,22 @@ describe("dice", function()
     it("matches dice rolls", function()
       local result = dice.die()("2d20")
 
-      assert.equal("die", result.parser)
-      assert.equal("", result.rest)
-      assert.equal(2, result.quantity)
-      assert.equal(20, result.sides)
+      assert.includes({
+        rest = "",
+        parser = "die",
+        quantity = 2,
+        sides = 20
+      }, result)
     end)
     it("quantity is optional", function()
       local result = dice.die()("d6")
 
-      assert.equal("die", result.parser)
-      assert.equal("", result.rest)
-      assert.equal(1, result.quantity)
-      assert.equal(6, result.sides)
+      assert.includes({
+        rest = "",
+        parser = "die",
+        quantity = 1,
+        sides = 6
+      }, result)
     end)
   end)
 
@@ -413,9 +496,15 @@ describe("dice", function()
     it("matches rolls and modifiers", function()
       local result = dice.dieRoll()("2d20H")
 
-      assert.equal(1, result.modifiers.drop.high)
-      assert.equal(2, result.quantity)
-      assert.equal(20, result.sides)
+      assert.includes({
+        quantity = 2,
+        sides = 20,
+        modifiers = {
+          drop = {
+            high = 1
+          }
+        }
+      }, result)
     end)
   end)
 
@@ -423,63 +512,126 @@ describe("dice", function()
     it("parses basic arithmatic", function()
       local result = dice.expression()("1-2+3")
 
-      assert.equal("addition", result.parser)
-      assert.equal("+", result.values[1].operator)
-      assert.equal(1, result.values[1].value.value)
-      assert.equal("-", result.values[2].operator)
-      assert.equal(2, result.values[2].value.value)
-      assert.equal("+", result.values[3].operator)
-      assert.equal(3, result.values[3].value.value)
-      assert.equal("", result.rest)
+      assert.includes({
+        rest = "",
+        parser = "addition",
+        values = {
+          {
+            operator = "+",
+            value = {
+              value = 1,
+            }
+          },
+          {
+            operator = "-",
+            value = {
+              value = 2,
+            }
+          },
+          {
+            operator = "+",
+            value = {
+              value = 3,
+            }
+          },
+        }
+      }, result)
     end)
     it("supports parentheses", function()
       local result = dice.expression()("1-(2+3)")
 
-      assert.equal("addition", result.parser)
-      assert.equal("+", result.values[1].operator)
-      assert.equal(1, result.values[1].value.value)
-      assert.equal("-", result.values[2].operator)
-
-      local inner = result.values[2].value
-
-      assert.equal("addition", inner.parser)
-      assert.equal("+", inner.values[1].operator)
-      assert.equal(2, inner.values[1].value.value)
-      assert.equal("+", inner.values[2].operator)
-      assert.equal(3, inner.values[2].value.value)
-
-      assert.equal("", result.rest)
+      assert.includes({
+        rest = "",
+        parser = "addition",
+        values = {
+          {
+            operator = "+",
+            value = {
+              value = 1
+            }
+          },
+          {
+            operator = "-",
+            value = {
+              parser = "addition",
+              values = {
+                {
+                  operator = "+",
+                  value = {
+                    value = 2
+                  }
+                },
+                {
+                  operator = "+",
+                  value = {
+                    value = 3
+                  }
+                }
+              }
+            }
+          }
+        }
+      }, result)
     end)
     it("multiplication has higher precedence", function()
       local result = dice.expression()("1-2*3")
 
-      assert.equal("addition", result.parser)
-      assert.equal("+", result.values[1].operator)
-      assert.equal(1, result.values[1].value.value)
-      assert.equal("-", result.values[2].operator)
-
-      local inner = result.values[2].value
-
-      assert.equal("multiplication", inner.parser)
-      assert.equal("+", inner.values[1].operator)
-      assert.equal(2, inner.values[1].value.value)
-      assert.equal("*", inner.values[2].operator)
-      assert.equal(3, inner.values[2].value.value)
-
-      assert.equal("", result.rest)
+      assert.includes({
+        parser = "addition",
+        rest = "",
+        values = {
+          {
+            operator = "+",
+            value = {
+              value = 1
+            }
+          },
+          {
+            operator = "-",
+            value = {
+              parser = "multiplication",
+              values = {
+                {
+                  operator = "+",
+                  value = {
+                    value = 2
+                  }
+                },
+                {
+                  operator = "*",
+                  value = {
+                    value = 3
+                  }
+                }
+              }
+            }
+          }
+        }
+      }, result)
     end)
 
     it("parses dice rolls", function()
       local result = dice.expression()("d6+1")
 
-      assert.equal("addition", result.parser)
-      assert.equal("die_roll", result.values[1].value.type)
-      assert.equal(1, result.values[1].value.quantity)
-      assert.equal(6, result.values[1].value.sides)
-
-      assert.equal("+", result.values[2].operator)
-      assert.equal(1, result.values[2].value.value)
-      assert.equal("", result.rest)
+      assert.includes({
+        rest = "",
+        parser = "addition",
+        values = {
+          {
+            value = {
+              type = "die_roll",
+              quantity = 1,
+              sides = 6,
+            }
+          },
+          {
+            operator = "+",
+            value = {
+              value = 1,
+            }
+          }
+        }
+      }, result)
     end)
   end)
 end)
