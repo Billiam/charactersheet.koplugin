@@ -123,5 +123,23 @@ describe("table_util", function()
       assert.spy(s).called_with(56, 8, 3)
       assert.equal(64, result)
     end)
+
+    it("returns the first value with no initial value", function()
+      local input = { 2 }
+      local s = spy.new(function(a, b) return a + b end)
+      local result = table_util.reduce(input, s)
+
+      assert.spy(s).not_called()
+      assert.equal(2, result)
+    end)
+
+    it("returns nil if no values provided", function()
+      local input = {}
+      local s = spy.new(function(a, b) return a + b end)
+      local result = table_util.reduce(input, s)
+
+      assert.spy(s).not_called()
+      assert.is_nil(result)
+    end)
   end)
 end)
