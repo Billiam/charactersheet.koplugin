@@ -111,4 +111,20 @@ function TableUtil.map(t, cb)
   return result
 end
 
+function TableUtil.reduce(t, init, cb)
+  local index = 1
+
+  if cb == nil then
+    cb = init
+    init = t[1]
+    index = 2
+  end
+
+  local result = init
+  for i = index, #t do
+    result = cb(result, t[i], i)
+  end
+  return result
+end
+
 return TableUtil

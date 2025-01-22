@@ -99,4 +99,29 @@ describe("table_util", function()
       assert.are_same({ 2, 4, 6 }, result)
     end)
   end)
+
+  describe("reduce", function()
+    it("returns the result of a callback on each element", function()
+      local input = { 2, 4, 8 }
+      local s = spy.new(function(a, b) return a + b end)
+      local result = table_util.reduce(input, s)
+
+      assert.spy(s).called(2)
+      assert.spy(s).called_with(2, 4, 2)
+      assert.spy(s).called_with(6, 8, 3)
+      assert.equal(14, result)
+    end)
+
+    it("accepts an initial value", function()
+      local input = { 2, 4, 8 }
+      local s = spy.new(function(a, b) return a + b end)
+      local result = table_util.reduce(input, 50, s)
+
+      assert.spy(s).called(3)
+      assert.spy(s).called_with(50, 2, 1)
+      assert.spy(s).called_with(52, 4, 2)
+      assert.spy(s).called_with(56, 8, 3)
+      assert.equal(64, result)
+    end)
+  end)
 end)
