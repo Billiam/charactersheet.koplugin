@@ -2,6 +2,10 @@ local c = require("charsheet/lib/dice_parser/combinators")
 local _t = require("charsheet/lib/table_util")
 local P = require("charsheet/lib/dice_parser/parser")
 
+-- TODO math operations:
+-- exponentiation
+-- floor/round/ceil/abs
+
 local digits = function()
   return c.match("^%d+")
 end
@@ -229,6 +233,7 @@ local valueReplacement = P("value_replacement", function()
           to = parsed_replacement.to,
         }
         value.type = "range"
+        -- FIXME remove type
       elseif parsed_replacement.type == "die" then
         value.replacement = {
           sides = parsed_replacement.sides,
@@ -265,31 +270,6 @@ local unique = P("unique", function()
   end)
 end)
 
-local explodeRerollCondition = P("explode_reroll_condition", function()
-  return c.map(
-    c.sequence(
-      c.capture("value", digitsAsInt()),
-      c.capture("operator", c.any(">=", "<=", ">", "<", "=")),
-      c.between("[", "]",
-        die()
-      )
-    ), function(result)
-      local roll = result.values[3]
-      return {
-        rest = result.rest,
-        type = "roll",
-        -- todo: from roll parser directly
-        roll = {
-          sides = roll.sides,
-          quantity = roll.quantity
-        },
-        value = result.captures.value,
-        operator = result.captures.operator,
-
-      }
-    end)
-end)
-
 local explodeRerollPattern = P("explode_reroll_pattern", function()
   return c.map(c.between("(", ")",
     c.list(",", numberInequality())
@@ -306,16 +286,30 @@ local explodeRerollPattern = P("explode_reroll_pattern", function()
     }
   end)
 end)
+local lazyBracketExpression
+
+local isExpression = P("is_expression", function()
+  return c.map(c.sequence(
+    "=",
+    lazyBracketExpression()
+  ), function(result)
+    return result.values[2]
+  end)
+end)
 
 local explodeConditions = P("explode_conditions", function()
   -- when should captures be terminated?
   -- TODO allow full dice roll in replacement value instead of simple xdx roll
   return c.between("{", "}",
     c.list(",",
-      c.any(
-        explodeRerollCondition(),
-        explodeRerollPattern(),
-        numberInequality()
+      c.sequence(
+        c.any(
+          explodeRerollPattern(),
+          numberInequality()
+        ),
+        c.optional(
+          isExpression()
+        )
       )
     )
   )
@@ -334,37 +328,45 @@ end
 
 local explodeMany = buildExplosionParser("explode_many", "!")
 local explodeOnce = buildExplosionParser("explode_once", "!!")
-local explodeReduced = buildExplosionParser("explode_reduced", "!!!")
 
--- TODO: pattern explosion
--- TODO: explosion without disregarding operator(".")
+local explodeReduced = P("explode_reduced", function()
+  return c.literal("!!!")
+end)
+
 local explode = P("explode", function()
   return c.map(c.any(explodeReduced(), explodeOnce(), explodeMany()), function(result)
     local r = {
       type = result.type,
-      values = {},
       rest = result.rest
     }
-    local condition = result.values[1]
+    if result.values then
+      local conditions = result.values[1]
+      r.values = {}
 
-    if condition.values then
-      for i, cond in ipairs(condition.values) do
-        if cond.type == "roll" then
-          r.values[i] = _t.clone(cond)
-        elseif cond.type == "pattern" then
-          r.values[i] = _t.clone(cond)
-        else
-          r.values[i] = {
-            value = cond.value,
-            operator = cond.inequality or "="
-          }
+      if conditions.values then
+        for i, cond in ipairs(conditions.values) do
+          local condition_definition = cond.values[1]
+          local condition_result = cond.values[2]
+          if condition_definition.type == "pattern" then
+            r.values[i] = _t.clone(condition_definition)
+          else
+            r.values[i] = {
+              value = condition_definition.value,
+              operator = condition_definition.inequality or "="
+            }
+          end
+          r.values[i].explodes_with = condition_result
+          r.values[i].rest = nil
         end
-        r.values[i].rest = nil
       end
-    end
 
-    if result.values[2].value then
-      r.quantity = result.values[2].value
+      if result.values[2].value then
+        r.quantity = result.values[2].value
+      end
+
+      if #r.values == 0 then
+        r.values = nil
+      end
     end
 
     return r
@@ -549,6 +551,12 @@ end
 local addition = arithmetic("addition", term, additionOperator)
 local expression = function()
   return c.any(addition(), term())
+end
+local bracketExpression = function()
+  return c.between("[", "]", expression())
+end
+lazyBracketExpression = function()
+  return lazyParser(bracketExpression)
 end
 local parenExpression = function()
   return c.between("(", ")", expression())

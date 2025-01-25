@@ -2,6 +2,7 @@ local say = require("say")
 local util = require('luassert.util')
 local assert = require('luassert.assert')
 
+_G.dump = require("charsheet/lib/table_util").dump
 assert:set_parameter("TableFormatLevel", -1)
 
 local deep_includes

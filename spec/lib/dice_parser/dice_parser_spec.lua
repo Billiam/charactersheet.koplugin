@@ -267,7 +267,7 @@ describe("dice", function()
         parser = "explode",
         type = "explode_many",
       }, result)
-      assert.are.same({}, result.values)
+      assert.is_nil(result.values)
     end)
 
     it("explodes extra dice", function()
@@ -293,18 +293,17 @@ describe("dice", function()
 
     it("explodes with a new roll", function()
       local result = dice.explode()("!{20=[2d6]}")
-
       assert.includes({
         rest = "",
         values = {
           {
-            type = "roll",
+            explodes_with = {
+              type = "die_roll",
+              sides = 6,
+              quantity = 2,
+            },
             value = 20,
             operator = "=",
-            roll = {
-              sides = 6,
-              quantity = 2
-            }
           }
         }
       }, result)
@@ -336,7 +335,7 @@ describe("dice", function()
         parser = "explode",
         type = "explode_once",
       }, result)
-      assert.are.same({}, result.values)
+      assert.is_nil(result.values)
     end)
 
     it("matches reducing explosion", function()
@@ -347,7 +346,7 @@ describe("dice", function()
         parser = "explode",
         type = "explode_reduced",
       }, result)
-      assert.are.same({}, result.values)
+      assert.is_nil(result.values)
     end)
 
     it("returns nil on error", function()
@@ -454,17 +453,16 @@ describe("dice", function()
           values = {
             { value = 4, operator = "=" },
             {
-              type = "roll",
-              value = 20,
-              operator = "=",
-              roll = {
+              explodes_with = {
+                type = "die_roll",
                 quantity = 2,
                 sides = 8,
-              }
+              },
+              value = 20,
+              operator = "=",
             }
           }
         }
-
       }, result)
     end)
   end)
