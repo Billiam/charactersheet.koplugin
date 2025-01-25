@@ -142,4 +142,15 @@ describe("table_util", function()
       assert.is_nil(result)
     end)
   end)
+
+  describe("select", function()
+    it("filters collections", function()
+      local input = { 1, 10, 2, 20, 3, 30 }
+      local result = table_util.select(input, function(item)
+        return item > 5
+      end)
+
+      assert.are.same({ 10, 20, 30 }, result)
+    end)
+  end)
 end)

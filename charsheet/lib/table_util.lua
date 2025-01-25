@@ -111,6 +111,15 @@ function TableUtil.map(t, cb)
   return result
 end
 
+function TableUtil.select(t, cb)
+  return TableUtil.reduce(t, {}, function(list, element, i)
+    if cb(element, i) then
+      table.insert(list, element)
+    end
+    return list
+  end)
+end
+
 function TableUtil.reduce(t, init, cb)
   local index = 1
 
