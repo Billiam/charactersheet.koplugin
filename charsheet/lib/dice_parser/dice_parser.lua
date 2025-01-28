@@ -231,16 +231,14 @@ local valueReplacement = P("value_replacement", function()
         value.replacement = {
           from = parsed_replacement.from,
           to = parsed_replacement.to,
-          type = "range"
         }
         value.type = "range"
-        -- FIXME remove type
       elseif parsed_replacement.type == "die" then
         value.replacement = {
           sides = parsed_replacement.sides,
           quantity = parsed_replacement.quantity,
-          type = "die_roll"
         }
+        value.type = "die_roll"
       else
         value.replacement = parsed_replacement.value
         value.type = "value"

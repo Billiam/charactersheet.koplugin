@@ -247,8 +247,8 @@ describe("dice", function()
           {
             value = 5,
             operator = ">",
+            type = "die_roll",
             replacement = {
-              type = "die_roll",
               quantity = 2,
               sides = 6
             }
@@ -439,8 +439,8 @@ describe("dice", function()
           values = {
             {
               value = 5,
+              type = "die_roll",
               replacement = {
-                type = "die_roll",
                 sides = 6,
                 quantity = 2
               },
