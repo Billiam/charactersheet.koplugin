@@ -198,8 +198,8 @@ describe("dice", function()
         rest = "",
         parser = "value_replacement",
         values = {
-          { value = 4, type = "value", replacement = 6, condition = "=" },
-          { value = 5, type = "value", replacement = 6, condition = "=" }
+          { value = 4, type = "value", replacement = 6, operator = "=" },
+          { value = 5, type = "value", replacement = 6, operator = "=" }
         }
       }, result)
     end)
@@ -211,8 +211,8 @@ describe("dice", function()
         rest = "",
         parser = "value_replacement",
         values = {
-          { value = 5,  type = "value", replacement = 0,  condition = "<" },
-          { value = 15, type = "value", replacement = 20, condition = ">" }
+          { value = 5,  type = "value", replacement = 0,  operator = "<" },
+          { value = 15, type = "value", replacement = 20, operator = ">" }
         }
       }, result)
     end)
@@ -226,7 +226,7 @@ describe("dice", function()
         values = {
           {
             value = 5,
-            condition = ">",
+            operator = ">",
             type = "range",
             replacement = {
               from = 10,
@@ -246,9 +246,9 @@ describe("dice", function()
         values = {
           {
             value = 5,
-            condition = ">",
-            type = "roll",
+            operator = ">",
             replacement = {
+              type = "die_roll",
               quantity = 2,
               sides = 6
             }
@@ -266,6 +266,7 @@ describe("dice", function()
         rest = "",
         parser = "explode",
         type = "explode_many",
+        quantity = 1,
       }, result)
       assert.is_nil(result.values)
     end)
@@ -438,12 +439,12 @@ describe("dice", function()
           values = {
             {
               value = 5,
-              type = "roll",
               replacement = {
+                type = "die_roll",
                 sides = 6,
                 quantity = 2
               },
-              condition = ">"
+              operator = ">"
             }
           }
         },
@@ -478,6 +479,7 @@ describe("dice", function()
         sides = 20
       }, result)
     end)
+
     it("quantity is optional", function()
       local result = dice.die()("d6")
 
@@ -535,6 +537,7 @@ describe("dice", function()
         }
       }, result)
     end)
+
     it("supports parentheses", function()
       local result = dice.expression()("1-(2+3)")
 
@@ -571,6 +574,7 @@ describe("dice", function()
         }
       }, result)
     end)
+
     it("multiplication has higher precedence", function()
       local result = dice.expression()("1-2*3")
 

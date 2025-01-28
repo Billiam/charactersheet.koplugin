@@ -224,22 +224,23 @@ local valueReplacement = P("value_replacement", function()
       local parsed_replacement = replacement.values[4]
       local value = {
         value = replacement.captures.value,
-        condition = replacement.captures.condition or "=",
+        operator = replacement.captures.condition or "=",
       }
 
       if parsed_replacement.type == "range" then
         value.replacement = {
           from = parsed_replacement.from,
           to = parsed_replacement.to,
+          type = "range"
         }
         value.type = "range"
         -- FIXME remove type
       elseif parsed_replacement.type == "die" then
         value.replacement = {
           sides = parsed_replacement.sides,
-          quantity = parsed_replacement.quantity
+          quantity = parsed_replacement.quantity,
+          type = "die_roll"
         }
-        value.type = "roll"
       else
         value.replacement = parsed_replacement.value
         value.type = "value"
@@ -298,19 +299,23 @@ local isExpression = P("is_expression", function()
 end)
 
 local explodeConditions = P("explode_conditions", function()
-  -- when should captures be terminated?
-  -- TODO allow full dice roll in replacement value instead of simple xdx roll
   return c.between("{", "}",
     c.list(",",
-      c.sequence(
-        c.any(
-          explodeRerollPattern(),
-          numberInequality()
-        ),
-        c.optional(
-          isExpression()
-        )
-      )
+      c.map(
+        c.sequence(
+          c.any(
+            explodeRerollPattern(),
+            numberInequality()
+          ),
+          c.optional(
+            isExpression()
+          )
+        ), function(result)
+          if result.values[2].value == nil and result.values[2].parser == nil then
+            result.values[2] = nil
+          end
+          return result
+        end)
     )
   )
 end)
@@ -355,14 +360,14 @@ local explode = P("explode", function()
               operator = condition_definition.inequality or "="
             }
           end
+
           r.values[i].explodes_with = condition_result
+
           r.values[i].rest = nil
         end
       end
 
-      if result.values[2].value then
-        r.quantity = result.values[2].value
-      end
+      r.quantity = result.values[2].value or 1
 
       if #r.values == 0 then
         r.values = nil
@@ -440,7 +445,6 @@ local dieModifier = P("modifiers", function()
     keepLowest(),
     keepMiddle(),
     keepHighest(),
-
 
     dropLowest(),
     dropHighest(),
