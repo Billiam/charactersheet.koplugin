@@ -39,8 +39,9 @@ local explodeReduced = function(die, rolls, reroll)
         quantity = 1,
         sides = roll.value
       }
-      reroll(roll_config, true)
-      local new_roll = roll_config.rolls[1]
+
+      local _, new_roll_config = reroll(roll_config, true)
+      local new_roll = new_roll_config.rolls[1]
 
       insertDieSorted(rolls, new_roll)
       table.insert(new_rolls, new_roll)
@@ -182,9 +183,8 @@ return function(die, rolls, reroll)
 
     if #new_explosions > 0 then
       for _, config in ipairs(new_explosions) do
-        reroll(config, config.share_dice_pool)
-
-        for _, roll in ipairs(config.rolls) do
+        local _, new_definition = reroll(config, config.share_dice_pool)
+        for _, roll in ipairs(new_definition.rolls) do
           if config.share_dice_pool then
             insertDieSorted(rolls, roll)
           end

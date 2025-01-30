@@ -9,6 +9,8 @@ return function(die, rolls, roller)
   for _, roll in ipairs(rolls) do
     for _, condition in ipairs(die.modifiers.value_replacement.values) do
       if operations.equality[condition.operator](roll.value, condition.value) then
+        roll.original_value = roll.value
+
         if condition.type == "range" then
           local definition = _t.clone(condition.replacement)
           definition.type = condition.type

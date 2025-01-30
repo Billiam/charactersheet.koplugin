@@ -16,7 +16,8 @@ DiceRoller.__index = DiceRoller
 function DiceRoller:new(definition, random)
   local o = {
     definition = definition,
-    random_impl = random or math.random
+    random_impl = random or math.random,
+    rolls = {}
   }
   return setmetatable(o, self)
 end
@@ -27,8 +28,10 @@ function DiceRoller:fromString(str, random)
 end
 
 function DiceRoller:run()
-  -- todo list
-  return self:getValue(self.definition), self.definition
+  local new_definition = _t.clone(self.definition, true)
+  self.rolls = {}
+
+  return self:getValue(new_definition), new_definition
 end
 
 function DiceRoller:processModifiers(die, rolls)
@@ -117,7 +120,11 @@ function DiceRoller:getValue(node)
   elseif node.type == "integer" then
     return node.value
   elseif node.type == "die_roll" then
-    return self:roll(node)
+    local result = self:roll(node)
+    for _, roll in ipairs(node.rolls) do
+      table.insert(self.rolls, roll)
+    end
+    return result
   elseif node.type == "range" then
     return self:range(node)
   end

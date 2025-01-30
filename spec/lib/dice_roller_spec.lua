@@ -55,13 +55,13 @@ describe("DiceRoller", function()
   it("caches results in tree definition", function()
     local definition = dice.expression()("2+2d6")
     assert.is_nil(definition.values[2].value.roll_result)
-    DiceRoller:new(definition, maxRandom):run()
+    local _, new_definition = DiceRoller:new(definition, maxRandom):run()
 
     assert.are.same({
       { value = 6, sides = 6 },
       { value = 6, sides = 6 }
-    }, definition.values[2].value.rolls)
-    assert.equal(12, definition.values[2].value.roll_result)
+    }, new_definition.values[2].value.rolls)
+    assert.equal(12, new_definition.values[2].value.roll_result)
   end)
 
   --it("supports dice modifiers", function()
@@ -160,7 +160,7 @@ describe("DiceRoller", function()
         assert.are.same({
           { value = 1,  sides = 8 },
           { value = 2,  sides = 8 },
-          { value = 10, sides = 8 },
+          { value = 10, sides = 8, original_value = 4 },
           { value = 8,  sides = 8 }
         }, definition.rolls)
         assert.equal(21, result)
@@ -173,8 +173,8 @@ describe("DiceRoller", function()
         assert.are.same({
           { value = 1,  sides = 8 },
           { value = 2,  sides = 8 },
-          { value = 10, sides = 8 },
-          { value = 10, sides = 8 }
+          { value = 10, sides = 8, original_value = 4 },
+          { value = 10, sides = 8, original_value = 8 }
         }, definition.rolls)
         assert.equal(23, result)
       end)
@@ -185,7 +185,7 @@ describe("DiceRoller", function()
 
         assert.are.same({
           { value = 1,  sides = 8 },
-          { value = 16, sides = 8 },
+          { value = 16, sides = 8, original_value = 2 },
           { value = 4,  sides = 8 },
           { value = 8,  sides = 8 }
         }, definition.rolls)
@@ -198,7 +198,7 @@ describe("DiceRoller", function()
 
         assert.are.same({
           { value = 1, sides = 8 },
-          { value = 3, sides = 8 },
+          { value = 3, sides = 8, original_value = 2 },
           { value = 4, sides = 8 },
           { value = 8, sides = 8 }
         }, definition.rolls)
@@ -210,36 +210,36 @@ describe("DiceRoller", function()
       it("rerolls selected values", function()
         local rolls = fixRolls({ 1, 2, 4, 8 })
         local definition = dice.expression()("3d8R{2}")
-        local result = DiceRoller:new(definition, rolls):run()
+        local result, new_definition = DiceRoller:new(definition, rolls):run()
 
         assert.equals(13, result)
-        assert.are.same({ 1, 4, 8 }, sortedValues(definition.rolls))
+        assert.are.same({ 1, 4, 8 }, sortedValues(new_definition.rolls))
       end)
 
       it("rerolls selected ranges", function()
         local rolls = fixRolls({ 1, 2, 4, 1 })
         local definition = dice.expression()("3d8R{>3}")
-        local result = DiceRoller:new(definition, rolls):run()
+        local result, new_definition = DiceRoller:new(definition, rolls):run()
 
         assert.equals(4, result)
-        assert.are.same({ 1, 1, 2 }, sortedValues(definition.rolls))
+        assert.are.same({ 1, 1, 2 }, sortedValues(new_definition.rolls))
       end)
 
       it("limits retries", function()
         local rolls = fixRolls({ 1, 3, 3, 3, 100 })
         local definition = dice.expression()("2d8R{3}2")
-        local result = DiceRoller:new(definition, rolls):run()
+        local result, new_definition = DiceRoller:new(definition, rolls):run()
 
         assert.equals(4, result)
-        assert.are.same({ 1, 3 }, sortedValues(definition.rolls))
+        assert.are.same({ 1, 3 }, sortedValues(new_definition.rolls))
       end)
 
       it("limits retries by default", function()
         local definition = dice.expression()("2d8R{8}")
-        local result = DiceRoller:new(definition, maxRandom):run()
+        local result, new_definition = DiceRoller:new(definition, maxRandom):run()
 
         assert.equals(16, result)
-        assert.are.same({ 8, 8 }, sortedValues(definition.rolls))
+        assert.are.same({ 8, 8 }, sortedValues(new_definition.rolls))
       end)
     end)
 
@@ -263,19 +263,19 @@ describe("DiceRoller", function()
       it("ignores specific values", function()
         local rolls = fixRolls({ 2, 2, 4, 4, 5 })
         local definition = dice.expression()("4d8U{2}")
-        local result = DiceRoller:new(definition, rolls):run()
+        local result, new_definition = DiceRoller:new(definition, rolls):run()
 
         assert.equals(13, result)
-        assert.are.same({ 2, 2, 4, 5 }, sortedValues(definition.rolls))
+        assert.are.same({ 2, 2, 4, 5 }, sortedValues(new_definition.rolls))
       end)
 
       it("ignores ranges", function()
         local rolls = fixRolls({ 2, 2, 4, 4, 5 })
         local definition = dice.expression()("4d8U{>3}")
-        local result = DiceRoller:new(definition, rolls):run()
+        local result, new_definition = DiceRoller:new(definition, rolls):run()
 
         assert.equals(15, result)
-        assert.are.same({ 2, 4, 4, 5 }, sortedValues(definition.rolls))
+        assert.are.same({ 2, 4, 4, 5 }, sortedValues(new_definition.rolls))
       end)
 
       it("limits infinite rerolls", function()
@@ -291,38 +291,38 @@ describe("DiceRoller", function()
         it("only explodes dice once", function()
           local definition = dice.expression()("2d4!!")
 
-          local result = DiceRoller:new(definition, maxRandom):run()
+          local result, new_definition = DiceRoller:new(definition, maxRandom):run()
 
           assert.includes({
             { value = 4, exploded = true },
             { value = 4, exploded = true },
             { value = 4 },
             { value = 4 },
-          }, definition.rolls)
+          }, new_definition.rolls)
           assert.equal(16, result)
         end)
 
         it("explodes with extra dice", function()
           local definition = dice.expression()("d4!!2")
 
-          local result = DiceRoller:new(definition, maxRandom):run()
+          local result, new_definition = DiceRoller:new(definition, maxRandom):run()
 
           assert.includes({
             { value = 4, exploded = true },
             { value = 4 },
             { value = 4 },
-          }, definition.rolls)
+          }, new_definition.rolls)
           assert.equal(12, result)
         end)
 
         it("explodes with custom rolls", function()
           local definition = dice.expression()("d4!!{4=[1d8]}")
-          local result = DiceRoller:new(definition, maxRandom):run()
+          local result, new_definition = DiceRoller:new(definition, maxRandom):run()
 
           assert.are.same({
             { value = 4, sides = 4, exploded = true },
             { value = 8, sides = 8 },
-          }, definition.rolls)
+          }, new_definition.rolls)
           assert.equal(12, result)
         end)
 
@@ -363,8 +363,8 @@ describe("DiceRoller", function()
         it("limits explosions to 1000 rounds", function()
           local definition = dice.expression()("2d4!")
 
-          local result = DiceRoller:new(definition, maxRandom):run()
-          assert.equal(2002, #definition.rolls)
+          local result, new_definition = DiceRoller:new(definition, maxRandom):run()
+          assert.equal(2002, #new_definition.rolls)
           assert.equal(8008, result)
         end)
       end)
@@ -374,7 +374,7 @@ describe("DiceRoller", function()
           local rolls = fixRolls({ 7, 5, 2, 2, 1, 1, 100 })
 
           local definition = dice.expression()("2d8!!!")
-          local result = DiceRoller:new(definition, rolls):run()
+          local result, new_definition = DiceRoller:new(definition, rolls):run()
 
           assert.equal(18, result)
           assert.are_same({
@@ -384,7 +384,7 @@ describe("DiceRoller", function()
             { value = 2, sides = 5, exploded = true },
             { value = 1, sides = 2 },
             { value = 1, sides = 2 },
-          }, definition.rolls)
+          }, new_definition.rolls)
         end)
       end)
     end)
