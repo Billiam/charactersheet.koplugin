@@ -52,6 +52,10 @@ describe("DiceRoller", function()
     assert.equal(32, DiceRoller:fromString("2-2d10+50", maxRandom):run())
   end)
 
+  it("handles negative values", function()
+    assert.equal(13, DiceRoller:fromString('-2+5-(-10)'):run())
+  end)
+
   it("caches results in tree definition", function()
     local definition = dice.expression()("2+2d6")
     assert.is_nil(definition.values[2].value.roll_result)

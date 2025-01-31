@@ -114,7 +114,8 @@ function DiceRoller:getValue(node)
   if node.type == "addition" or node.type == "multiplication" then
     local result = 0
     for _, child in ipairs(node.values) do
-      result = operations.math[child.operator](result, self:getValue(child.value))
+      local mult = child.value.negate and -1 or 1
+      result = operations.math[child.operator](result, self:getValue(child.value) * mult)
     end
     return result
   elseif node.type == "integer" then
