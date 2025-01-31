@@ -378,8 +378,12 @@ describe("combinators", function()
       local tag = _c.between(_c.literal("<"), _c.literal(">"), _c.match("[^>]+"))
       local result = tag("<content> other")
 
-      assert.equal("content", result.value)
-      assert.equal(" other", result.rest)
+      assert.includes({
+        value = "content",
+        left = "<",
+        right = ">",
+        rest = " other"
+      }, result)
     end)
 
     it("returns nil on failure", function()

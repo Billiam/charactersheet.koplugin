@@ -217,12 +217,13 @@ local between = function(left, right, middle)
     sequence(left, middle, right),
     function(result)
       local r = _t.clone(result.values[2])
+      r.left = result.values[1].value
+      r.right = result.values[3].value
       r.rest = result.rest
       return r
     end
   )
 end
-
 
 local nthValue = function(n, parser)
   return map(parser, function(result)
