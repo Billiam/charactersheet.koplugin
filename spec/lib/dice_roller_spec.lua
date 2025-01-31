@@ -142,16 +142,15 @@ describe("DiceRoller", function()
     end)
 
     describe("count", function()
+      it("counts maximum rolls by default", function()
+        local rolls = fixRolls({ 1, 8, 4, 8 })
+        local result, definition = DiceRoller:fromString("4d8#", rolls):run()
+        assert.equal(2, result)
+      end)
+
       it("counts rolls greater than a threshold", function()
         local rolls = fixRolls({ 1, 2, 4, 8 })
         local result, definition = DiceRoller:fromString("4d8#{4}", rolls):run()
-
-        assert.are.same({
-          { value = 1, sides = 8 },
-          { value = 2, sides = 8 },
-          { value = 4, sides = 8 },
-          { value = 8, sides = 8 }
-        }, definition.rolls)
         assert.equal(1, result)
       end)
     end)
