@@ -15,11 +15,13 @@ return function(die, rolls, roller)
           local definition = _t.clone(condition.replacement)
           definition.type = condition.type
           roll.value = roller(definition)
-          --FIXME Needs to consider expressions
         elseif condition.type == "die_roll" then
           local definition = _t.clone(condition.replacement)
           definition.type = condition.type
-          roll.value = roller(definition, true)
+          local result, child_definition = roller(definition)
+
+          roll.value = result
+          roll.rolls = child_definition.rolls
         else
           roll.value = condition.replacement
         end

@@ -18,6 +18,21 @@ local toInt = function()
   end
 end
 
+local lazyBracketDieRoll
+local lazyBracketExpression
+local lazyParenExpression
+
+local lazyParser = function(parser)
+  local p
+  return function(str)
+    if not p then
+      p = parser()
+    end
+
+    return p(str)
+  end
+end
+
 local digitsAsInt = P("integer", function()
   return c.map(digits(), toInt())
 end)
@@ -198,7 +213,7 @@ local range = P("range", function()
 end)
 
 local replacementValue = P("replacement_value", function()
-  return c.any(range(), digitsAsInt(), c.between("[", "]", die()))
+  return c.any(range(), digitsAsInt(), lazyBracketDieRoll())
 end)
 
 -- TODO allow string value replacements
@@ -233,11 +248,8 @@ local valueReplacement = P("value_replacement", function()
           to = parsed_replacement.to,
         }
         value.type = "range"
-      elseif parsed_replacement.type == "die" then
-        value.replacement = {
-          sides = parsed_replacement.sides,
-          quantity = parsed_replacement.quantity,
-        }
+      elseif parsed_replacement.type == "die_roll" then
+        value.replacement = _t.clone(parsed_replacement)
         value.type = "die_roll"
       else
         value.replacement = parsed_replacement.value
@@ -285,7 +297,6 @@ local explodeRerollPattern = P("explode_reroll_pattern", function()
     }
   end)
 end)
-local lazyBracketExpression
 
 local isExpression = P("is_expression", function()
   return c.map(c.sequence(
@@ -477,16 +488,11 @@ local dieRoll = P("die_roll", function()
     return r
   end)
 end)
-
-local lazyParser = function(parser)
-  local p
-  return function(str)
-    if not p then
-      p = parser()
-    end
-
-    return p(str)
-  end
+local bracketDieRoll = function()
+  return c.between("[", "]", dieRoll())
+end
+lazyBracketDieRoll = function()
+  return lazyParser(bracketDieRoll)
 end
 
 local value = P("value", function()
@@ -511,7 +517,6 @@ local additionOperator = P("addition_operator", function()
   return c.any("+", "-")
 end)
 
-local lazyParenExpression
 local factor = function()
   return c.any(signedValue(), lazyParenExpression())
 end
