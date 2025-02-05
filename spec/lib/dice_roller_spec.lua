@@ -201,7 +201,14 @@ describe("DiceRoller", function()
 
         assert.are.same({
           { value = 1, sides = 8 },
-          { value = 3, sides = 8, original_value = 2 },
+          {
+            value = 3,
+            sides = 8,
+            original_value = 2,
+            rolls = {
+              { sides = 4, value = 3 }
+            }
+          },
           { value = 4, sides = 8 },
           { value = 8, sides = 8 }
         }, definition.rolls)
