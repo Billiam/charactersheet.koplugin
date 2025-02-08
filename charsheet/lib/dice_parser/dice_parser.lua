@@ -81,31 +81,31 @@ local numberInequality = P("number_inequality", function()
   ), function(result)
     local r = _t.clone(result)
     r.inequality = result.values[1].value
-    r.value = result.values[2].value
+    r.value = result.values[2]
     r.values = nil
     return r
   end)
 end)
 
-local dieSides = P("die_sides", function()
+local defaultInteger = function(default)
   return c.map(
     c.optional(fixedValue()),
     function(result)
-      if not result.value then
+      if not result.value and not result.values then
         return {
           type = "integer",
-          value = 1,
+          value = default,
           rest = result.rest
         }
       end
       return result
     end
   )
-end)
+end
 
 local die = P("die", function()
   return c.map(c.sequence(
-    dieSides(),
+    defaultInteger(1),
     c.literal("d"),
     fixedValue()
   ), function(result)
@@ -117,16 +117,12 @@ local die = P("die", function()
   end)
 end)
 
-local keepCount = P("keep_count", function()
-  return c.capture("keep_count", fixedValue())
-end)
-
 local keepHighest = P("keep_highest", function()
-  return c.map(c.sequence(c.literal("K"), c.optional(keepCount())),
+  return c.map(c.nthValue(2, c.sequence(c.literal("K"), defaultInteger(1))),
     function(result)
       return {
         type = "keep",
-        high = result.captures and result.captures.keep_count or 1,
+        high = result,
         rest = result.rest
       }
     end
@@ -134,11 +130,11 @@ local keepHighest = P("keep_highest", function()
 end)
 
 local keepLowest = P("keep_lowest", function()
-  return c.map(c.sequence(c.literal("KL"), c.optional(keepCount())),
+  return c.map(c.nthValue(2, c.sequence(c.literal("KL"), defaultInteger(1))),
     function(result)
       return {
         type = "keep",
-        low = result.captures and result.captures.keep_count or 1,
+        low = result,
         rest = result.rest
       }
     end
@@ -146,11 +142,11 @@ local keepLowest = P("keep_lowest", function()
 end)
 
 local keepMiddle = P("keep_middle", function()
-  return c.map(c.sequence(c.literal("KM"), c.optional(keepCount())),
+  return c.map(c.nthValue(2, c.sequence(c.literal("KM"), defaultInteger(1))),
     function(result)
       return {
         type = "keep",
-        middle = result.captures and result.captures.keep_count or 1,
+        middle = result,
         rest = result.rest
       }
     end
@@ -161,25 +157,21 @@ local keep = P("keep", function()
   return c.any(keepLowest(), keepMiddle(), keepHighest())
 end)
 
-local dropCount = P("drop_count", function()
-  return c.capture("drop_count", fixedValue())
-end)
-
 local dropHighest = P("drop_highest", function()
-  return c.map(c.sequence(c.literal("H"), c.optional(dropCount())), function(result)
+  return c.map(c.nthValue(2, c.sequence(c.literal("H"), defaultInteger(1))), function(result)
     return {
       type = "drop",
-      high = result.captures and result.captures.drop_count or 1,
+      high = result,
       rest = result.rest
     }
   end)
 end)
 
 local dropLowest = P("drop_lowest", function()
-  return c.map(c.sequence(c.literal("L"), c.optional(dropCount())), function(result)
+  return c.map(c.nthValue(2, c.sequence(c.literal("L"), defaultInteger(1))), function(result)
     return {
       type = "drop",
-      low = result.captures and result.captures.drop_count or 1,
+      low = result,
       rest = result.rest
     }
   end)
@@ -221,7 +213,6 @@ local clamp = P("clamp", function()
       local r = {
         rest = result.rest
       }
-
       for _, condition in ipairs(result.values) do
         if condition.value then
           if condition.inequality:sub(1, 1) == ">" then
@@ -243,8 +234,8 @@ local range = P("range", function()
   ), function(result)
     -- TODO clone in map
     local r = _t.clone(result)
-    r.from = result.values[1].value
-    r.to = result.values[3].value
+    r.from = result.values[1]
+    r.to = result.values[3]
     r.values = nil
 
     return r
@@ -263,8 +254,8 @@ local valueReplacement = P("value_replacement", function()
       c.list(
         ",",
         c.sequence(
-          c.capture("condition", c.optional(c.any("<", ">"))),
-          c.capture("value", fixedValue()),
+          c.optional(c.any("<", ">")),
+          fixedValue(),
           "=",
           replacementValue()
         )
@@ -277,8 +268,8 @@ local valueReplacement = P("value_replacement", function()
     r.values = _t.map(result.values, function(replacement)
       local parsed_replacement = replacement.values[4]
       local value = {
-        value = replacement.captures.value,
-        operator = replacement.captures.condition or "=",
+        value = replacement.values[2],
+        operator = replacement.values[1].value or "=",
       }
 
       if parsed_replacement.type == "range" then
@@ -291,7 +282,7 @@ local valueReplacement = P("value_replacement", function()
         value.replacement = _t.clone(parsed_replacement)
         value.type = "die_roll"
       else
-        value.replacement = parsed_replacement.value
+        value.replacement = parsed_replacement
         value.type = "value"
       end
 
@@ -408,14 +399,16 @@ local explode = P("explode", function()
               operator = condition_definition.inequality or "="
             }
           end
-
           r.values[i].explodes_with = condition_result
 
           r.values[i].rest = nil
         end
       end
 
-      r.quantity = result.values[2].value or 1
+      r.quantity = result.values[2].value and result.values[2] or {
+        type = "integer",
+        value = 1
+      }
 
       if #r.values == 0 then
         r.values = nil
@@ -433,13 +426,13 @@ local reroll = P("reroll", function()
       c.between("{", "}",
         c.list(",", numberInequality())
       ),
-      c.capture("reroll_limit", c.optional(numberInequality()))
+      c.optional(numberInequality())
     )
   ), function(result)
     local r = {
       rest = result.rest,
       values = {},
-      limit = result.captures.reroll_limit
+      limit = result.values[2].value
     }
 
     for i, condition in ipairs(result.values[1].values) do
@@ -632,5 +625,5 @@ return {
   valueReplacement = valueReplacement,
 
   expression = expression,
-  multipleExpressions = multipleExpressions
+  multipleExpressions = multipleExpressions,
 }
