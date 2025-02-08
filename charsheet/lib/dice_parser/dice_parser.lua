@@ -37,6 +37,34 @@ local digitsAsInt = P("integer", function()
   return c.map(digits(), toInt())
 end)
 
+local variableChars = P("", function()
+  return c.match("^[%w_-]+")
+end)
+
+local variables = P("variable", function()
+  return c.map(
+    c.list(".", variableChars()),
+    function(result)
+      local r = {
+        rest = result.rest,
+        values = {}
+      }
+      for i, key in ipairs(result.values) do
+        r.values[i] = key.value
+      end
+      return r
+    end
+  )
+end)
+
+local interpolation = function()
+  return c.between(c.literal("{{"), c.literal("}}"), variables())
+end
+
+local fixedValue = P("fixed_value", function()
+  return c.any(digitsAsInt(), interpolation())
+end)
+
 local inequality = P("inequality", function()
   return c.concatenate(
     c.sequence(
@@ -49,7 +77,7 @@ end)
 local numberInequality = P("number_inequality", function()
   return c.map(c.sequence(
     c.optional(inequality()),
-    digitsAsInt()
+    fixedValue()
   ), function(result)
     local r = _t.clone(result)
     r.inequality = result.values[1].value
@@ -59,23 +87,40 @@ local numberInequality = P("number_inequality", function()
   end)
 end)
 
+local dieSides = P("die_sides", function()
+  return c.map(
+    c.optional(fixedValue()),
+    function(result)
+      if not result.value then
+        return {
+          type = "integer",
+          value = 1,
+          rest = result.rest
+        }
+      end
+      return result
+    end
+  )
+end)
+
 local die = P("die", function()
   return c.map(c.sequence(
-    c.optional(c.capture("quantity", digitsAsInt())),
+    dieSides(),
     c.literal("d"),
-    c.capture("sides", digitsAsInt())
+    fixedValue()
   ), function(result)
     return {
       rest = result.rest,
-      quantity = result.captures.quantity or 1,
-      sides = result.captures.sides,
+      quantity = result.values[1],
+      sides = result.values[3],
     }
   end)
 end)
 
 local keepCount = P("keep_count", function()
-  return c.capture("keep_count", digitsAsInt())
+  return c.capture("keep_count", fixedValue())
 end)
+
 local keepHighest = P("keep_highest", function()
   return c.map(c.sequence(c.literal("K"), c.optional(keepCount())),
     function(result)
@@ -99,6 +144,7 @@ local keepLowest = P("keep_lowest", function()
     end
   )
 end)
+
 local keepMiddle = P("keep_middle", function()
   return c.map(c.sequence(c.literal("KM"), c.optional(keepCount())),
     function(result)
@@ -110,14 +156,15 @@ local keepMiddle = P("keep_middle", function()
     end
   )
 end)
---
+
 local keep = P("keep", function()
   return c.any(keepLowest(), keepMiddle(), keepHighest())
 end)
 
 local dropCount = P("drop_count", function()
-  return c.capture("drop_count", digitsAsInt())
+  return c.capture("drop_count", fixedValue())
 end)
+
 local dropHighest = P("drop_highest", function()
   return c.map(c.sequence(c.literal("H"), c.optional(dropCount())), function(result)
     return {
@@ -190,17 +237,9 @@ local clamp = P("clamp", function()
   )
 end)
 
-local variableChars = P("", function()
-  return c.match("^[%w_]+")
-end)
-
-local variables = P("variables", function()
-  return c.list(",", variableChars())
-end)
-
 local range = P("range", function()
   return c.map(c.sequence(
-    digitsAsInt(), "..", digitsAsInt()
+    fixedValue(), "..", fixedValue()
   ), function(result)
     -- TODO clone in map
     local r = _t.clone(result)
@@ -213,7 +252,7 @@ local range = P("range", function()
 end)
 
 local replacementValue = P("replacement_value", function()
-  return c.any(range(), digitsAsInt(), lazyBracketDieRoll())
+  return c.any(range(), fixedValue(), lazyBracketDieRoll())
 end)
 
 -- TODO allow string value replacements
@@ -225,7 +264,7 @@ local valueReplacement = P("value_replacement", function()
         ",",
         c.sequence(
           c.capture("condition", c.optional(c.any("<", ">"))),
-          c.capture("value", digitsAsInt()),
+          c.capture("value", fixedValue()),
           "=",
           replacementValue()
         )
@@ -334,7 +373,7 @@ local buildExplosionParser = function(name, prefix)
     return c.dropLeftValue(1, c.sequence(
       prefix,
       c.optional(explodeConditions()),
-      c.optional(digitsAsInt()),
+      c.optional(fixedValue()),
       c.optional(".")
     ))
   end)
@@ -441,11 +480,6 @@ local count = P("count", function()
   end)
 end)
 
-local interpolation = function()
-  return c.between(c.literal("{{"), c.literal("}}"), variables())
-end
-
-
 local dieModifier = P("modifiers", function()
   return c.map(c.nOrMoreUnique(0,
     clamp(),
@@ -496,7 +530,7 @@ lazyBracketDieRoll = function()
 end
 
 local value = P("value", function()
-  return c.any(dieRoll(), digitsAsInt())
+  return c.any(dieRoll(), fixedValue())
 end)
 
 local negatedValue = P("negated_value", function()

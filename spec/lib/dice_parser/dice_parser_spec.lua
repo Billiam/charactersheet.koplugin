@@ -249,8 +249,14 @@ describe("dice", function()
             operator = ">",
             type = "die_roll",
             replacement = {
-              quantity = 2,
-              sides = 6
+              quantity = {
+                type = "integer",
+                value = 2
+              },
+              sides = {
+                type = "integer",
+                value = 6
+              }
             }
           }
         }
@@ -300,8 +306,14 @@ describe("dice", function()
           {
             explodes_with = {
               type = "die_roll",
-              sides = 6,
-              quantity = 2,
+              sides = {
+                type = "integer",
+                value = 6
+              },
+              quantity = {
+                type = "integer",
+                value = 2
+              },
             },
             value = 20,
             operator = "=",
@@ -441,8 +453,14 @@ describe("dice", function()
               value = 5,
               type = "die_roll",
               replacement = {
-                sides = 6,
-                quantity = 2
+                sides = {
+                  type = "integer",
+                  value = 6
+                },
+                quantity = {
+                  type = "integer",
+                  value = 2
+                }
               },
               operator = ">"
             }
@@ -456,8 +474,14 @@ describe("dice", function()
             {
               explodes_with = {
                 type = "die_roll",
-                quantity = 2,
-                sides = 8,
+                quantity = {
+                  type = "integer",
+                  value = 2
+                },
+                sides = {
+                  type = "integer",
+                  value = 8
+                },
               },
               value = 20,
               operator = "=",
@@ -475,8 +499,14 @@ describe("dice", function()
       assert.includes({
         rest = "",
         parser = "die",
-        quantity = 2,
-        sides = 20
+        quantity = {
+          type = "integer",
+          value = 2
+        },
+        sides = {
+          type = "integer",
+          value = 20
+        }
       }, result)
     end)
 
@@ -486,8 +516,14 @@ describe("dice", function()
       assert.includes({
         rest = "",
         parser = "die",
-        quantity = 1,
-        sides = 6
+        quantity = {
+          type = "integer",
+          value = 1
+        },
+        sides = {
+          type = "integer",
+          value = 6
+        }
       }, result)
     end)
   end)
@@ -497,8 +533,14 @@ describe("dice", function()
       local result = dice.dieRoll()("2d20H")
 
       assert.includes({
-        quantity = 2,
-        sides = 20,
+        quantity = {
+          type = "integer",
+          value = 2
+        },
+        sides = {
+          type = "integer",
+          value = 20
+        },
         modifiers = {
           drop = {
             high = 1
@@ -575,6 +617,45 @@ describe("dice", function()
       }, result)
     end)
 
+    describe("variables", function()
+      --it("supports variables", function()
+      --  local result = dice.expression()("2+{{strength}}")
+      --  assert.includes({
+      --    type = "addition",
+      --    values = {
+      --      {
+      --        operator = "+",
+      --        value = {
+      --          type = 'integer',
+      --          value = 2
+      --        }
+      --      },
+      --      {
+      --        operator = "+",
+      --        value = {
+      --          type = "variable",
+      --          values = {
+      --            "strength"
+      --          }
+      --        }
+      --      }
+      --    }
+      --  }, result)
+      --end)
+
+      it("supports variables in place of dice roll components", function()
+        --local result = dice.expression()("{{q}}d{{sides}}")
+        --local result = dice.expression()("2d6")
+        --dump(result)
+        --assert.equal("", result.rest)
+        --assert.equal(result, true)
+      end)
+
+      --it("returns a list for nested values", function()
+      --  local result = dice.expression()("{{a.b.c}}")
+      --end)
+    end)
+
     it("multiplication has higher precedence", function()
       local result = dice.expression()("1-2*3")
 
@@ -622,8 +703,14 @@ describe("dice", function()
           {
             value = {
               type = "die_roll",
-              quantity = 1,
-              sides = 6,
+              quantity = {
+                type = "integer",
+                value = 1
+              },
+              sides = {
+                type = "integer",
+                value = 6
+              }
             }
           },
           {
