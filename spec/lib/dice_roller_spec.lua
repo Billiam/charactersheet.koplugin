@@ -38,6 +38,68 @@ describe("DiceRoller", function()
     assert.equal(-4, DiceRoller:fromString("2-(1+5)"):run())
   end)
 
+  describe("variables", function()
+    it("replaces variables with values from data", function()
+      local result, new_definition = DiceRoller:fromString("1+{{strength}}"):run({ strength = 99 })
+
+      assert.equal(100, result)
+      assert.includes({
+        values = {
+          {
+            value = {
+              value = 1
+            }
+          },
+          {
+            value = {
+              value = 99,
+              variable = "strength"
+            }
+          }
+        }
+      }, new_definition)
+    end)
+
+    it("is case sensitive", function()
+      local result = DiceRoller:fromString("{{strength}}"):run({ Strength = 99 })
+      assert.equal(0, result)
+    end)
+
+    it("replaces variables with nested data", function()
+      local data = {
+        stat = {
+          char = {
+            strength = 99,
+            wisdom = 5
+          }
+        }
+      }
+      local result, new_definition = DiceRoller:fromString("1+{{stat.char.strength}}"):run(data)
+
+      assert.equal(100, result)
+      assert.includes({
+        values = {
+          {
+            value = {
+              value = 1
+            }
+          },
+          {
+            value = {
+              value = 99,
+              variable = "stat.char.strength"
+            }
+          }
+        }
+      }, new_definition)
+    end)
+
+    it("defaults missing values to zero", function()
+      local result = DiceRoller:fromString("1+{{strength}}"):run({})
+      assert.equal(result, 1)
+    end)
+  end)
+
   it("can roll dice", function()
     assert.equal(6, DiceRoller:fromString("1d6", maxRandom):run())
     assert.equal(40, DiceRoller:fromString("2d20", maxRandom):run())
@@ -67,13 +129,6 @@ describe("DiceRoller", function()
     }, new_definition.values[2].value.rolls)
     assert.equal(12, new_definition.values[2].value.roll_result)
   end)
-
-  --it("supports dice modifiers", function()
-  --  local rolls = fixRolls({ 25, 75 })
-  --  local result, definition = DiceRoller:fromString("2d100K", rolls):run()
-  --  assert.is_true(definition)
-  --  assert.equal(75, result)
-  --end)
 
   describe("dice modifiers", function()
     describe("keep", function()
