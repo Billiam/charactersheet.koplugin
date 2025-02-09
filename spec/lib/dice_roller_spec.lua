@@ -105,6 +105,10 @@ describe("DiceRoller", function()
     assert.equal(40, DiceRoller:fromString("2d20", maxRandom):run())
   end)
 
+  it("can roll dice with variables", function()
+    assert.equal(12, DiceRoller:fromString("{{quantity}}d{{sides}}", maxRandom):run({ quantity = 2, sides = 6 }))
+  end)
+
   it("verify fixed result rolls", function()
     local rolls = fixRolls({ 1, 2, 3 })
     assert.equal(6, DiceRoller:fromString("3d100", rolls):run())
@@ -155,6 +159,12 @@ describe("DiceRoller", function()
         local result = DiceRoller:fromString("4d20KL2", rolls):run()
         assert.equal(3, result)
       end)
+
+      it("supports variables", function()
+        local rolls = fixRolls({ 1, 2, 4, 8 })
+        local result = DiceRoller:fromString("4d20K{{count}}", rolls):run({ count = 3 })
+        assert.equal(14, result)
+      end)
     end)
 
     describe("drop", function()
@@ -162,6 +172,13 @@ describe("DiceRoller", function()
         local rolls = fixRolls({ 1, 2, 4, 8 })
         local result = DiceRoller:fromString("4d20H2", rolls):run()
         assert.equal(3, result)
+      end)
+
+
+      it("supports variables", function()
+        local rolls = fixRolls({ 1, 2, 4, 8 })
+        local result = DiceRoller:fromString("4d20H{{count}}", rolls):run({ count = 3 })
+        assert.equal(1, result)
       end)
 
       it("drops lowest rolls", function()
@@ -181,6 +198,12 @@ describe("DiceRoller", function()
         local result = DiceRoller:fromString("4d20D{1,>=7}", rolls):run()
         assert.equal(6, result)
       end)
+
+      it("supports variables in conditions", function()
+        local rolls = fixRolls({ 1, 2, 4, 8 })
+        local result = DiceRoller:fromString("4d20D{{{one}},>={{seven}}}", rolls):run({ one = 1, seven = 7 })
+        assert.equal(6, result)
+      end)
     end)
 
     describe("clamp", function()
@@ -194,6 +217,17 @@ describe("DiceRoller", function()
         }, definition.rolls)
         assert.equal(10, result)
       end)
+
+      it("supports variabes for clamp conditions", function()
+        local rolls = fixRolls({ 1, 8 })
+        local result, definition = DiceRoller:fromString("2d8C<{{min}}>{{max}}", rolls):run({ min = 2, max = 7 })
+
+        assert.are.same({
+          { value = 2, sides = 8 },
+          { value = 7, sides = 8 }
+        }, definition.rolls)
+        assert.equal(9, result)
+      end)
     end)
 
     describe("count", function()
@@ -205,8 +239,14 @@ describe("DiceRoller", function()
 
       it("counts rolls greater than a threshold", function()
         local rolls = fixRolls({ 1, 2, 4, 8 })
-        local result, definition = DiceRoller:fromString("4d8#{4}", rolls):run()
-        assert.equal(1, result)
+        local result, definition = DiceRoller:fromString("4d8#{>=4}", rolls):run()
+        assert.equal(2, result)
+      end)
+
+      it("supports variables for conditions", function()
+        local rolls = fixRolls({ 1, 2, 4, 8 })
+        local result, definition = DiceRoller:fromString("4d8#{>={{four}}}", rolls):run({ four = 4 })
+        assert.equal(2, result)
       end)
     end)
 
@@ -240,6 +280,23 @@ describe("DiceRoller", function()
       it("replaces values with random values by range", function()
         local rolls = fixRolls({ 1, 2, 4, 8, 16 })
         local result, definition = DiceRoller:fromString("4d8V{2=10..20}", rolls):run()
+
+        assert.are.same({
+          { value = 1,  sides = 8 },
+          { value = 16, sides = 8, original_value = 2 },
+          { value = 4,  sides = 8 },
+          { value = 8,  sides = 8 }
+        }, definition.rolls)
+        assert.equal(29, result)
+      end)
+
+      it("supports variables", function()
+        local rolls = fixRolls({ 1, 2, 4, 8, 16 })
+        local result, definition = DiceRoller:fromString("4d8V{{{input}}={{low}}..{{high}}}", rolls):run({
+          input = 2,
+          low = 10,
+          high = 10
+        })
 
         assert.are.same({
           { value = 1,  sides = 8 },
@@ -306,6 +363,15 @@ describe("DiceRoller", function()
         assert.equals(16, result)
         assert.are.same({ 8, 8 }, sortedValues(new_definition.rolls))
       end)
+
+      it("supports variables", function()
+        local rolls = fixRolls({ 1, 2, 4, 8 })
+        local definition = dice.expression()("3d8R{{{reroll}}}")
+        local result, new_definition = DiceRoller:new(definition, rolls):run({ reroll = 2 })
+
+        assert.equals(13, result)
+        assert.are.same({ 1, 4, 8 }, sortedValues(new_definition.rolls))
+      end)
     end)
 
     describe("unique", function()
@@ -329,6 +395,15 @@ describe("DiceRoller", function()
         local rolls = fixRolls({ 2, 2, 4, 4, 5 })
         local definition = dice.expression()("4d8U{2}")
         local result, new_definition = DiceRoller:new(definition, rolls):run()
+
+        assert.equals(13, result)
+        assert.are.same({ 2, 2, 4, 5 }, sortedValues(new_definition.rolls))
+      end)
+
+      it("supports variables", function()
+        local rolls = fixRolls({ 2, 2, 4, 4, 5 })
+        local definition = dice.expression()("4d8U{{{ignore}}}")
+        local result, new_definition = DiceRoller:new(definition, rolls):run({ ignore = 2 })
 
         assert.equals(13, result)
         assert.are.same({ 2, 2, 4, 5 }, sortedValues(new_definition.rolls))
@@ -380,6 +455,19 @@ describe("DiceRoller", function()
           assert.equal(12, result)
         end)
 
+        it("supports variables", function()
+          local definition = dice.expression()("d4!!{{explode_count}}")
+
+          local result, new_definition = DiceRoller:new(definition, maxRandom):run({ explode_count = 3 })
+          assert.includes({
+            { value = 4, exploded = true },
+            { value = 4 },
+            { value = 4 },
+            { value = 4 }
+          }, new_definition.rolls)
+          assert.equal(16, result)
+        end)
+
         it("explodes with custom rolls", function()
           local definition = dice.expression()("d4!!{4=[1d8]}")
           local result, new_definition = DiceRoller:new(definition, maxRandom):run()
@@ -397,6 +485,14 @@ describe("DiceRoller", function()
           local result = DiceRoller:new(definition, rolls):run()
 
           assert.equals(109, result)
+        end)
+
+        it("supports varuables in patterns", function()
+          local rolls = fixRolls({ 1, 2, 3, 10, 100, 10000 })
+          local definition = dice.expression()("3d4!!{({{first}},{{second}})}")
+          local result = DiceRoller:new(definition, rolls):run({ first = 2, second = 3 })
+
+          assert.equals(16, result)
         end)
       end)
 

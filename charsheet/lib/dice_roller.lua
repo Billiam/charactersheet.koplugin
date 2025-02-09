@@ -55,16 +55,10 @@ function DiceRoller:_processVariables(tree, data)
     }
   end
 
-  for _, key in ipairs(integer_fields) do
-    if tree[key] then
-      tree[key] = self:_processVariables(tree[key], data)
+  for key, value in pairs(tree) do
+    if type(value) == "table" then
+      tree[key] = self:_processVariables(value, data)
     end
-  end
-
-  if tree.values then
-    tree.values = _t.map(tree.values, function(value)
-      return self:_processVariables(value, data)
-    end)
   end
 
   return tree

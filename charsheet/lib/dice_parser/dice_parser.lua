@@ -405,7 +405,7 @@ local explode = P("explode", function()
         end
       end
 
-      r.quantity = result.values[2].value and result.values[2] or {
+      r.quantity = result.values[2].type and result.values[2] or {
         type = "integer",
         value = 1
       }
