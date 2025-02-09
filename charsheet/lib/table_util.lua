@@ -120,6 +120,17 @@ function TableUtil.select(t, cb)
   end)
 end
 
+function TableUtil.sortBy(t, cb)
+  local cache = TableUtil.map(t, function(a) return { cb(a), a } end)
+
+  cache.sort(function(a, b)
+    if a < b then return true end
+    return false
+  end)
+
+  return TableUtil.map(t, function(a) return a[2] end)
+end
+
 function TableUtil.reduce(t, init, cb)
   local index = 1
 

@@ -27,11 +27,47 @@ function DiceRoller:fromString(str, random)
   return self:new(definition, random)
 end
 
-function DiceRoller:run()
-  local new_definition = _t.clone(self.definition, true)
+function DiceRoller:run(data)
+  data = data or {}
+  local new_definition = self:processVariables(self.definition, data)
   self.rolls = {}
 
   return self:getValue(new_definition), new_definition
+end
+
+function DiceRoller:processVariables(tree, data)
+  local clone = _t.clone(tree, true)
+  return self:_processVariables(clone, data)
+end
+
+local integer_fields = { "value", "min", "max", "middle", "limit" }
+
+function DiceRoller:_processVariables(tree, data)
+  if tree.type == "integer" then
+    return tree
+  end
+
+  if tree.type == "variable" then
+    return {
+      type = "integer",
+      variable = table.concat(tree.values, "."),
+      value = self:getFixedValue(tree, data)
+    }
+  end
+
+  for _, key in ipairs(integer_fields) do
+    if tree[key] then
+      tree[key] = self:_processVariables(tree[key], data)
+    end
+  end
+
+  if tree.values then
+    tree.values = _t.map(tree.values, function(value)
+      return self:_processVariables(value, data)
+    end)
+  end
+
+  return tree
 end
 
 function DiceRoller:processModifiers(die, rolls)
@@ -46,6 +82,7 @@ function DiceRoller:processModifiers(die, rolls)
 
   -- TODO unique before or after explosion
   -- TODO reroll before or after explosion
+
   local modifier_order = { "clamp", "value_replacement", "reroll", "explode", "unique", "keep", "drop", "count" }
   for _, type in ipairs(modifier_order) do
     if die.modifiers[type] then
@@ -80,16 +117,18 @@ function DiceRoller:reroller(previous_modifiers)
   end
 end
 
-function DiceRoller:roll(die)
+function DiceRoller:roll(die, data)
   local result = 0
   local rolls = {}
-  for i = 1, die.quantity do
-    local value = self.random_impl(1, die.sides)
 
-    rolls[i] = { value = value, sides = die.sides }
+  for i = 1, self:getFixedValue(die.quantity, data) do
+    local sides = self:getFixedValue(die.sides)
+    local value = self.random_impl(1, sides)
+
+    rolls[i] = { value = value, sides = sides }
   end
 
-  self:processModifiers(die, rolls)
+  self:processModifiers(die, rolls, data)
   local roll_sum = die.count_result or _t.reduce(rolls, 0, function(res, roll)
     if not roll.drop then
       return res + roll.value
@@ -104,6 +143,16 @@ end
 
 function DiceRoller:range(node)
   return self.random_impl(node.from, node.to)
+end
+
+function DiceRoller:getFixedValue(node, data)
+  if node.type == "integer" then
+    return node.value
+  elseif node.type == "variable" then
+    return _t.dig(data, table.unpack(node.values)) or 0
+  end
+
+  error("Unexpected node type", node.type)
 end
 
 function DiceRoller:getValue(node)

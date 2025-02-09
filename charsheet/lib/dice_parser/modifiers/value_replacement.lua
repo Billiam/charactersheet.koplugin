@@ -8,7 +8,7 @@ return function(die, rolls, roller)
 
   for _, roll in ipairs(rolls) do
     for _, condition in ipairs(die.modifiers.value_replacement.values) do
-      if operations.equality[condition.operator](roll.value, condition.value) then
+      if operations.equality[condition.operator](roll.value, condition.value.value) then
         roll.original_value = roll.value
 
         if condition.type == "range" then
@@ -23,7 +23,7 @@ return function(die, rolls, roller)
           roll.value = result
           roll.rolls = child_definition.rolls
         else
-          roll.value = condition.replacement
+          roll.value = condition.replacement.value
         end
       end
     end

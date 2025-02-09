@@ -20,14 +20,16 @@ return function(die, rolls)
   -- sort by value
   if die.modifiers.keep.high then
     min_index = 1
-    max_index = die.modifiers.keep.high
+    max_index = die.modifiers.keep.high.value
   elseif die.modifiers.keep.low then
-    min_index = #rolls - die.modifiers.keep.low + 1
+    min_index = #rolls - die.modifiers.keep.low.value + 1
     max_index = #rolls
   elseif die.modifiers.keep.middle then
     local middle = (#rolls + 1) / 2
-    min_index = math.ceil(middle - die.modifiers.keep.middle / 2 + 0.25)
-    max_index = math.floor(middle + die.modifiers.keep.middle / 2)
+    local mid_value = die.modifiers.keep.middle.value
+
+    min_index = math.ceil(middle - mid_value / 2 + 0.25)
+    max_index = math.floor(middle + mid_value / 2)
   end
 
   keepByIndex(rolls, min_index, max_index)

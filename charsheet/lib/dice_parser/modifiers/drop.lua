@@ -19,18 +19,18 @@ return function(die, rolls, _)
     return
   end
   if die.modifiers.drop.high then
-    dropByIndex(rolls, 1, die.modifiers.drop.high)
+    dropByIndex(rolls, 1, die.modifiers.drop.high.value)
   end
   --
   if die.modifiers.drop.low then
-    dropByIndex(rolls, #rolls - die.modifiers.drop.low + 1, #rolls)
+    dropByIndex(rolls, #rolls - die.modifiers.drop.low.value + 1, #rolls)
   end
 
   if die.modifiers.drop.values then
     --TODO: sort modifiers by effective range, and/or create index
     for i, roll in ipairs(rolls) do
       for _, drop_condition in ipairs(die.modifiers.drop.values) do
-        if operations.equality[drop_condition.operator](roll.value, drop_condition.value) then
+        if operations.equality[drop_condition.operator](roll.value, drop_condition.value.value) then
           roll.drop = true
           break
         end

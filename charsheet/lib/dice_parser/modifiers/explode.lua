@@ -36,8 +36,14 @@ local explodeReduced = function(die, rolls, reroll)
       roll.exploded = true
       local roll_config = {
         type = "die_roll",
-        quantity = 1,
-        sides = roll.value
+        quantity = {
+          type = "integer",
+          value = 1
+        },
+        sides = {
+          type = "integer",
+          value = roll.value
+        }
       }
 
       local _, new_roll_config = reroll(roll_config, true)
@@ -61,7 +67,7 @@ local patternMatches = function(rolls, condition)
   for _, pattern_item in ipairs(condition.values) do
     local found_match = false
     for i, roll in ipairs(rolls) do
-      if not match_index[i] and operations.equality[pattern_item.operator](roll.value, pattern_item.value) then
+      if not match_index[i] and operations.equality[pattern_item.operator](roll.value, pattern_item.value.value) then
         match_index[i] = true
         found_match = true
         break
@@ -82,7 +88,7 @@ end
 
 local inequalityMatches = function(rolls, condition)
   return _t.select(rolls, function(roll)
-    return not roll.exploded and operations.equality[condition.operator](roll.value, condition.value)
+    return not roll.exploded and operations.equality[condition.operator](roll.value, condition.value.value)
   end)
 end
 

@@ -6,7 +6,7 @@ local skipRoll = function(roll, skip_index, range_conditions)
   end
 
   for _, condition in ipairs(range_conditions) do
-    if operations.equality[condition.operator](roll.value, condition.value) then
+    if operations.equality[condition.operator](roll.value, condition.value.value) then
       return true
     end
   end
@@ -25,9 +25,9 @@ return function(die, rolls, reroll)
 
   for _, condition in ipairs(die.modifiers.unique.values) do
     if condition.operator == "=" then
-      skip_index[condition.value] = true
+      skip_index[condition.value.value] = true
     elseif (condition.operator == "<" or condition.operator == "<=") and condition <= 20 then
-      local range = condition.operator == "<" and condition.value - 1 or condition.value
+      local range = condition.operator == "<" and condition.value.value - 1 or condition.value.value
       for i = 1, range do
         skip_index[i] = true
       end
@@ -43,7 +43,10 @@ return function(die, rolls, reroll)
       while index[roll.value] and not skipRoll(roll, skip_index, range_conditions) and tries < 1000 do
         -- TODO: should rerolls consider modifiers?
         local replacement = {
-          quantity = 1,
+          quantity = {
+            type = "integer",
+            value = 1
+          },
           sides = die.sides,
           type = "die_roll"
         }

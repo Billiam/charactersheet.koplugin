@@ -12,7 +12,7 @@ return function(die, rolls, _)
   end
   for _, roll in ipairs(rolls) do
     for _, condition in ipairs(conditions) do
-      if operations.equality[condition.operator](roll.value, condition.value) then
+      if operations.equality[condition.operator](roll.value, condition.value.value) then
         total = total + 1
         break
       end
