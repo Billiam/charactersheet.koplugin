@@ -9,8 +9,6 @@ local literal = P("literal", function(chars)
         value = chars,
         rest = str:sub(#chars + 1)
       }
-      --else
-      --  return P.err "Expected " .. chars .. ", received " .. begin_chars
     end
   end
 end)

@@ -540,6 +540,10 @@ end)
 local multiplicationOperator = P("multiplication_operator", function()
   return c.any("*", "/")
 end)
+local exponentiationOperator = P("exponentiation_operator", function()
+  return c.literal("^")
+end)
+
 local additionOperator = P("addition_operator", function()
   return c.any("+", "-")
 end)
@@ -578,14 +582,22 @@ local arithmetic = function(name, type, operator)
     end)
   end)
 end
-local multiplication = arithmetic("multiplication", factor, multiplicationOperator)
-local term = function()
-  return c.any(multiplication(), factor())
+
+local exponentiation = arithmetic("exponentiation", factor, exponentiationOperator)
+local coefficient = function()
+  return c.any(exponentiation(), factor())
 end
+
+local multiplication = arithmetic("multiplication", coefficient, multiplicationOperator)
+local term = function()
+  return c.any(multiplication(), coefficient())
+end
+
 local addition = arithmetic("addition", term, additionOperator)
 local expression = function()
   return c.any(addition(), term())
 end
+
 local bracketExpression = function()
   return c.between("[", "]", expression())
 end

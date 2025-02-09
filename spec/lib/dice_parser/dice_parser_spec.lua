@@ -840,6 +840,43 @@ describe("dice", function()
       }, result)
     end)
 
+    it("parses exponents", function()
+      local result = dice.expression()("5*2^3")
+
+      assert.includes({
+        rest = "",
+        type = "multiplication",
+        values = {
+          {
+            operator = "+",
+            value = {
+              value = 5
+            }
+          },
+          {
+            operator = "*",
+            value = {
+              type = "exponentiation",
+              values = {
+                {
+                  operator = "+",
+                  value = {
+                    value = 2
+                  }
+                },
+                {
+                  operator = "^",
+                  value = {
+                    value = 3
+                  }
+                }
+              }
+            }
+          }
+        }
+      }, result)
+    end)
+
     it("supports parentheses", function()
       local result = dice.expression()("1-(2+3)")
 
