@@ -70,7 +70,7 @@ local function dump(value, call_indent)
       else
         child = dump(inner_value, indent)
       end
-      output = output .. inner_key .. " = " .. tostring(child)
+      output = output .. tostring(inner_key) .. " = " .. tostring(child)
     end
     output = output .. "\n" .. call_indent .. "}"
   elseif type(value) == "userdata" then
