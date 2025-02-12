@@ -1,5 +1,6 @@
 local _t = require("charsheet/lib/table_util")
-local P = require("charsheet/lib/dice_parser/parser")
+local Parsers = require("charsheet/lib/dice_parser/parser")
+local P = Parsers.P
 
 local literal = P("literal", function(chars)
   return function(str)
@@ -167,9 +168,11 @@ local nOrMore = function(n, parser)
 end
 
 local nOrMoreUnique = function(n, ...)
-  local parsers = _t.map({ ... }, toLiteral)
+  local parser_list = _t.map({ ... }, toLiteral)
 
   return function(str)
+    local parsers = _t.clone(parser_list)
+
     local rest = str
     local results = {}
     local captures = {}

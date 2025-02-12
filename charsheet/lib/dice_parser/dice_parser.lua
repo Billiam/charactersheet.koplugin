@@ -1,9 +1,10 @@
 local c = require("charsheet/lib/dice_parser/combinators")
 local _t = require("charsheet/lib/table_util")
-local P = require("charsheet/lib/dice_parser/parser")
+local Parsers = require("charsheet/lib/dice_parser/parser")
+local P = Parsers.P
+local lazyParser = Parsers.lazy
 
 -- TODO math operations:
--- exponentiation
 -- floor/round/ceil/abs
 
 local digits = function()
@@ -21,17 +22,6 @@ end
 local lazyBracketDieRoll
 local lazyBracketExpression
 local lazyParenExpression
-
-local lazyParser = function(parser)
-  local p
-  return function(str)
-    if not p then
-      p = parser()
-    end
-
-    return p(str)
-  end
-end
 
 local digitsAsInt = P("integer", function()
   return c.map(digits(), toInt())
