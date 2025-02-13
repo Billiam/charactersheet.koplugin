@@ -85,6 +85,7 @@ local concatenate = function(parser)
       end
     end
     r.value = table.concat(values, "")
+    r.values = nil
     return r
   end)
 end

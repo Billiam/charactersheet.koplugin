@@ -3,6 +3,28 @@ local dice = require("charsheet/lib/dice_parser/dice_parser")
 local _t = require("charsheet/lib/table_util")
 
 describe("dice", function()
+  describe("digits", function()
+    it("matches integers", function()
+      local result = dice.expression()("15")
+
+      assert.includes({
+        rest = "",
+        type = "integer",
+        value = 15
+      }, result)
+    end)
+
+    it("matches decimals", function()
+      local result = dice.expression()("12.5")
+
+      assert.includes({
+        rest = "",
+        type = "integer",
+        value = 12.5
+      }, result)
+    end)
+  end)
+
   describe("keep", function()
     it("matches keep highest", function()
       local result = dice.keep()("K")
@@ -808,6 +830,32 @@ describe("dice", function()
         }
       }, result)
     end)
+  end)
+
+  describe("method", function()
+    local methods = { "abs", "acos", "asin", "atan", "ceil", "cos", "floor", "round", "sign", "sin", "sqrt", "tan" }
+    for _, method in ipairs(methods) do
+      describe(method, function()
+        it("matches method usage", function()
+          local result = dice.method()(method .. "(1.5)")
+          assert.includes({
+            rest = "",
+            type = "method",
+            method = method,
+            values = {
+              {
+                type = "integer",
+                value = 1.5,
+              }
+            }
+          }, result)
+        end)
+
+        it("requires arguments", function()
+          assert.is_nil(dice.method()(method .. "()"))
+        end)
+      end)
+    end
   end)
 
   describe("expression", function()

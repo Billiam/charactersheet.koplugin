@@ -4,17 +4,14 @@ local Parsers = require("charsheet/lib/dice_parser/parser")
 local P = Parsers.P
 local lazyParser = Parsers.lazy
 
--- TODO math operations:
--- floor/round/ceil/abs
-
 local digits = function()
-  return c.match("^%d+")
+  return c.concatenate(c.sequence(c.match("^%d+"), c.optional(c.match("^%.%d+"))))
 end
 
-local toInt = function()
+local toNumber = function()
   return function(result)
     local r = _t.clone(result)
-    r.value = math.floor(tonumber(r.value))
+    r.value = tonumber(r.value)
     return r
   end
 end
@@ -23,8 +20,53 @@ local lazyBracketDieRoll
 local lazyBracketExpression
 local lazyParenExpression
 
+local buildMethod = function(name)
+  return function()
+    return c.map(c.sequence(c.literal(name), lazyParenExpression()), function(result)
+      return {
+        rest = result.rest,
+        type = "method",
+        method = result.values[1].value,
+        values = { result.values[2] }
+      }
+    end)
+  end
+end
+
+local floor = buildMethod('floor')
+local ceil = buildMethod('ceil')
+local round = buildMethod('round')
+local abs = buildMethod('abs')
+
+local sin = buildMethod('sin')
+local cos = buildMethod('cos')
+local tan = buildMethod('tan')
+local asin = buildMethod('asin')
+local acos = buildMethod('acos')
+local atan = buildMethod('atan')
+local sqrt = buildMethod('sqrt')
+local sign = buildMethod('sign')
+
+local method = function()
+  return c.any(
+    floor(),
+    ceil(),
+    round(),
+    abs(),
+
+    sin(),
+    cos(),
+    tan(),
+    asin(),
+    acos(),
+    atan(),
+    sqrt(),
+    sign()
+  )
+end
+
 local digitsAsInt = P("integer", function()
-  return c.map(digits(), toInt())
+  return c.map(digits(), toNumber())
 end)
 
 local variableChars = P("", function()
@@ -52,7 +94,7 @@ local interpolation = function()
 end
 
 local fixedValue = P("fixed_value", function()
-  return c.any(digitsAsInt(), interpolation())
+  return c.any(digitsAsInt(), interpolation(), method())
 end)
 
 local inequality = P("inequality", function()
@@ -552,7 +594,7 @@ local appendMath = function(operator, type)
   end)
 end
 
-local arithmetic = function(name, type, operator)
+local buildArithmetic = function(name, type, operator)
   return P(name, function()
     return c.map(c.sequence(type(), c.nOrMore(1, appendMath(operator, type))), function(result)
       local r = {
@@ -573,17 +615,24 @@ local arithmetic = function(name, type, operator)
   end)
 end
 
-local exponentiation = arithmetic("exponentiation", factor, exponentiationOperator)
+
+--min/max
+--check/compare (?)
+--clamp (val, min, max)
+--sin,cos,tan,asin,acos,atan,atan2(,),tanh,exp(,),sqrt,ln, abs, pow(,), lerp(,,), mod(,), sign
+
+
+local exponentiation = buildArithmetic("exponentiation", factor, exponentiationOperator)
 local coefficient = function()
   return c.any(exponentiation(), factor())
 end
 
-local multiplication = arithmetic("multiplication", coefficient, multiplicationOperator)
+local multiplication = buildArithmetic("multiplication", coefficient, multiplicationOperator)
 local term = function()
   return c.any(multiplication(), coefficient())
 end
 
-local addition = arithmetic("addition", term, additionOperator)
+local addition = buildArithmetic("addition", term, additionOperator)
 local expression = function()
   return c.any(addition(), term())
 end
@@ -625,6 +674,7 @@ return {
   reroll = reroll,
   unique = unique,
   valueReplacement = valueReplacement,
+  method = method,
 
   expression = expression,
   multipleExpressions = multipleExpressions,
