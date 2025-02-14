@@ -3,6 +3,7 @@ local dice = require("charsheet/lib/dice_parser/dice_parser")
 
 describe("DiceRoller", function()
   local maxRandom = function(_, max) return max end
+  local minRandom = function(min, _) return min end
   local fixRolls = function(rolls)
     local i = 1
     return function(a, b)
@@ -101,12 +102,41 @@ describe("DiceRoller", function()
   end)
 
   describe("methods", function()
-    it("supports floor", function()
-      assert.equal(2, DiceRoller:fromString("floor(2.9)"):run())
+    it("supports abs", function()
+      assert.equal(10, DiceRoller:fromString("abs(-10)"):run())
+      assert.equal(5, DiceRoller:fromString("abs(5)"):run())
     end)
 
     it("supports ceil", function()
       assert.equal(3, DiceRoller:fromString("ceil(2.1)"):run())
+    end)
+
+    it("supports clamp", function()
+      assert.equal(5, DiceRoller:fromString("clamp(3,5,10)"):run())
+      assert.equal(10, DiceRoller:fromString("clamp(12,5,10)"):run())
+      assert.equal(8, DiceRoller:fromString("clamp(8,5,10)"):run())
+    end)
+
+    it("supports lerp", function()
+      assert.equal(18, DiceRoller:fromString("lerp(10,20,0.8)"):run())
+    end)
+
+    it("supports mod", function()
+      assert.equal(1, DiceRoller:fromString("mod(15,2)"):run())
+      assert.equal(-1, DiceRoller:fromString("mod(-10,3)"):run())
+    end)
+
+    it("supports floor", function()
+      assert.equal(2, DiceRoller:fromString("floor(2.9)"):run())
+    end)
+
+    it("supports pow", function()
+      assert.equal(256, DiceRoller:fromString("pow(2,8)"):run())
+    end)
+
+    it("supports rnd", function()
+      assert.equal(66, DiceRoller:fromString("rnd(22,66)", maxRandom):run())
+      assert.equal(22, DiceRoller:fromString("rnd(22,66)", minRandom):run())
     end)
 
     it("supports round", function()
@@ -114,9 +144,39 @@ describe("DiceRoller", function()
       assert.equal(3, DiceRoller:fromString("round(2.6)"):run())
     end)
 
-    it("supports abs", function()
-      assert.equal(10, DiceRoller:fromString("abs(-10)"):run())
-      assert.equal(5, DiceRoller:fromString("abs(5)"):run())
+    it("supports rounddown", function()
+      assert.equal(2, DiceRoller:fromString("rounddown(2.1)"):run())
+      assert.equal(-3, DiceRoller:fromString("rounddown(-2.5)"):run())
+    end)
+
+    it("supports roundeven", function()
+      assert.equal(5, DiceRoller:fromString("roundeven(5)"):run())
+      assert.equal(4, DiceRoller:fromString("roundeven(4.9)"):run())
+      assert.equal(6, DiceRoller:fromString("roundeven(5.1)"):run())
+    end)
+
+    it("supports roundfromzero", function()
+      assert.equal(5, DiceRoller:fromString("roundfromzero(5)"):run())
+      assert.equal(6, DiceRoller:fromString("roundfromzero(5.1)"):run())
+      assert.equal(-4, DiceRoller:fromString("roundfromzero(-3.2)"):run())
+    end)
+
+    it("supports roundodd", function()
+      assert.equal(6, DiceRoller:fromString("roundodd(6)"):run())
+      assert.equal(5, DiceRoller:fromString("roundodd(4.9)"):run())
+      assert.equal(7, DiceRoller:fromString("roundodd(6.1)"):run())
+      assert.equal(5, DiceRoller:fromString("roundodd(5.9)"):run())
+    end)
+
+    it("supports roundtozero", function()
+      assert.equal(5, DiceRoller:fromString("roundtozero(5)"):run())
+      assert.equal(5, DiceRoller:fromString("roundtozero(5.1)"):run())
+      assert.equal(-3, DiceRoller:fromString("roundtozero(-3.2)"):run())
+    end)
+
+    it("supports roundup", function()
+      assert.equal(3, DiceRoller:fromString("roundup(2.1)"):run())
+      assert.equal(-2, DiceRoller:fromString("roundup(-2.5)"):run())
     end)
 
     it("supports sign", function()

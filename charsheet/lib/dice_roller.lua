@@ -8,10 +8,7 @@ DiceRoller.__index = DiceRoller
 
 --TODO multiple results
 -- math:
---  round, min, max, clamp, rnd
---  rounddown, roundup, roundeven, roundodd, roundtozero, roundfromzero
 --  check, compare
---  variables
 
 function DiceRoller:new(definition, random)
   local o = {
@@ -29,9 +26,12 @@ end
 
 function DiceRoller:run(data)
   data = data or {}
-  local new_definition = self:processVariables(self.definition, data)
   self.rolls = {}
+  if not self.definition then
+    return
+  end
 
+  local new_definition = self:processVariables(self.definition, data)
   return self:getValue(new_definition), new_definition
 end
 
@@ -170,7 +170,12 @@ function DiceRoller:getValue(node)
     return result
   elseif node.type == "method" then
     local values = _t.map(node.values, function(child) return self:getValue(child) end)
-    return operations.methods[node.method](table.unpack(values))
+
+    if node.method == "rnd" then
+      return self.random_impl(table.unpack(values))
+    else
+      return operations.methods[node.method](table.unpack(values))
+    end
   elseif node.type == "range" then
     return self:range(node)
   end

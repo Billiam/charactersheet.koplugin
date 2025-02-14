@@ -26,48 +26,69 @@ local lazyBracketExpression
 local lazyParenExpression
 local lazyMultipleExpressions
 
-local buildMethod = function(name)
+local buildMethod = function(...)
+  local names = { ... }
+  local method_name = #names > 1 and c.any(...) or c.literal(names[1])
   return function()
-    return c.map(c.sequence(c.literal(name), c.between("(", ")", lazyMultipleExpressions())), function(result)
-      return {
-        rest = result.rest,
-        type = "method",
-        method = result.values[1].value,
-        values = result.values[2].values
-      }
-    end)
+    return c.map(c.sequence(method_name, c.between("(", ")", lazyMultipleExpressions())),
+      function(result)
+        return {
+          rest = result.rest,
+          type = "method",
+          method = names[1],
+          values = result.values[2].values
+        }
+      end)
   end
 end
 
-local floor = buildMethod('floor')
-local ceil = buildMethod('ceil')
-local round = buildMethod('round')
-local abs = buildMethod('abs')
-
-local sin = buildMethod('sin')
-local cos = buildMethod('cos')
-local tan = buildMethod('tan')
-local asin = buildMethod('asin')
-local acos = buildMethod('acos')
-local atan = buildMethod('atan')
-local sqrt = buildMethod('sqrt')
-local sign = buildMethod('sign')
+local abs = buildMethod("abs")
+local acos = buildMethod("acos")
+local asin = buildMethod("asin")
+local atan = buildMethod("atan2", "atan")
+local ceil = buildMethod("ceil", "roundup", "rup")
+local clampMethod = buildMethod("clamp")
+local cos = buildMethod("cos")
+local floor = buildMethod("floor", "rounddown", "rdown")
+local lerp = buildMethod("lerp")
+local mod = buildMethod("mod")
+local pow = buildMethod("pow")
+local rnd = buildMethod("rnd")
+local round = buildMethod("round")
+local roundEven = buildMethod("roundeven", "reven", "roundtoeven")
+local roundFromZero = buildMethod("roundfromzero")
+local roundOdd = buildMethod("roundodd", "rodd", "roundtoodd")
+local roundToZero = buildMethod("roundtozero", "truncate", "trunc")
+local sign = buildMethod("sign")
+local sin = buildMethod("sin")
+local sqrt = buildMethod("sqrt")
+local tan = buildMethod("tan")
 
 local method = function()
   return c.any(
-    floor(),
-    ceil(),
-    round(),
     abs(),
-
-    sin(),
-    cos(),
-    tan(),
-    asin(),
     acos(),
+    asin(),
     atan(),
+    ceil(),
+    clampMethod(),
+    cos(),
+    floor(),
+    lerp(),
+    mod(),
+    pow(),
+    rnd(),
+    roundEven(),
+    roundFromZero(),
+    roundOdd(),
+    roundToZero(),
+
+    round(),
+
+    sign(),
+    sin(),
     sqrt(),
-    sign()
+    tan()
   )
 end
 

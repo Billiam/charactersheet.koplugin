@@ -833,15 +833,18 @@ describe("dice", function()
   end)
 
   describe("method", function()
-    local methods = { "abs", "acos", "asin", "atan", "ceil", "cos", "floor", "round", "sign", "sin", "sqrt", "tan" }
+    local methods = { "abs", "acos", "asin", "atan2", "atan", "ceil", "roundup", "rup", "clamp", "cos", "floor",
+      "rounddown", "rdown", "lerp", "mod", "pow", "rnd", "round", "roundeven", "reven", "roundtoeven", "roundfromzero",
+      "roundodd", "rodd", "roundtoodd", "roundtozero", "truncate", "trunc", "sign", "sin", "sqrt", "tan" }
+
     for _, method in ipairs(methods) do
       describe(method, function()
         it("matches method usage", function()
           local result = dice.method()(method .. "(1.5)")
           assert.includes({
             rest = "",
+
             type = "method",
-            method = method,
             values = {
               {
                 type = "number",
