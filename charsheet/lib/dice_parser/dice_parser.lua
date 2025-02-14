@@ -19,15 +19,16 @@ end
 local lazyBracketDieRoll
 local lazyBracketExpression
 local lazyParenExpression
+local lazyMultipleExpressions
 
 local buildMethod = function(name)
   return function()
-    return c.map(c.sequence(c.literal(name), lazyParenExpression()), function(result)
+    return c.map(c.sequence(c.literal(name), c.between("(", ")", lazyMultipleExpressions())), function(result)
       return {
         rest = result.rest,
         type = "method",
         method = result.values[1].value,
-        values = { result.values[2] }
+        values = result.values[2].values
       }
     end)
   end
@@ -652,6 +653,9 @@ end
 local multipleExpressions = P("multiple_expressions", function()
   return c.list(",", expression())
 end)
+lazyMultipleExpressions = function()
+  return lazyParser(multipleExpressions)
+end
 
 return {
   clamp = clamp,

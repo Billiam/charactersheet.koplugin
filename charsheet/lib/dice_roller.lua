@@ -157,18 +157,20 @@ function DiceRoller:getValue(node)
   if node.type == "addition" or node.type == "multiplication" then
     local result = 0
     for _, child in ipairs(node.values) do
-      local mult = child.value.negate and -1 or 1
-      result = operations.math[child.operator](result, self:getValue(child.value) * mult)
+      result = operations.math[child.operator](result, self:getValue(child.value))
     end
     return result
   elseif node.type == "integer" then
-    return node.value
+    return node.value * (node.negate and -1 or 1)
   elseif node.type == "die_roll" then
     local result = self:roll(node)
     for _, roll in ipairs(node.rolls) do
       table.insert(self.rolls, roll)
     end
     return result
+  elseif node.type == "method" then
+    local values = _t.map(node.values, function(child) return self:getValue(child) end)
+    return operations.methods[node.method](table.unpack(values))
   elseif node.type == "range" then
     return self:range(node)
   end

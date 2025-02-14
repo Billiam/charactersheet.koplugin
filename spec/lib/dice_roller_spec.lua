@@ -100,6 +100,36 @@ describe("DiceRoller", function()
     end)
   end)
 
+  describe("methods", function()
+    it("supports floor", function()
+      assert.equal(2, DiceRoller:fromString("floor(2.9)"):run())
+    end)
+
+    it("supports ceil", function()
+      assert.equal(3, DiceRoller:fromString("ceil(2.1)"):run())
+    end)
+
+    it("supports round", function()
+      assert.equal(2, DiceRoller:fromString("round(2.1)"):run())
+      assert.equal(3, DiceRoller:fromString("round(2.6)"):run())
+    end)
+
+    it("supports abs", function()
+      assert.equal(10, DiceRoller:fromString("abs(-10)"):run())
+      assert.equal(5, DiceRoller:fromString("abs(5)"):run())
+    end)
+
+    it("supports sign", function()
+      assert.equal(-1, DiceRoller:fromString("sign(-10)"):run())
+      assert.equal(1, DiceRoller:fromString("sign(50)"):run())
+      assert.equal(0, DiceRoller:fromString("sign(0)"):run())
+    end)
+
+    it("supports sqrt", function()
+      assert.equal(4, DiceRoller:fromString("sqrt(16)"):run())
+    end)
+  end)
+
   it("can roll dice", function()
     assert.equal(6, DiceRoller:fromString("1d6", maxRandom):run())
     assert.equal(40, DiceRoller:fromString("2d20", maxRandom):run())
