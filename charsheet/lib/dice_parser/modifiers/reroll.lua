@@ -43,7 +43,7 @@ return function(die, rolls, roller)
     while shouldReroll(roll, reroll_index, range_conditions) and tries < max do
       local replacement = {
         quantity = {
-          type = "integer",
+          type = "number",
           value = 1
         },
         sides = die.sides,

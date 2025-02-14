@@ -9,7 +9,7 @@ describe("dice", function()
 
       assert.includes({
         rest = "",
-        type = "integer",
+        type = "number",
         value = 15
       }, result)
     end)
@@ -19,7 +19,7 @@ describe("dice", function()
 
       assert.includes({
         rest = "",
-        type = "integer",
+        type = "number",
         value = 12.5
       }, result)
     end)
@@ -33,7 +33,7 @@ describe("dice", function()
         rest = "",
         parser = "keep",
         high = {
-          type = "integer",
+          type = "number",
           value = 1
         }
       }, result)
@@ -46,7 +46,7 @@ describe("dice", function()
         rest = "",
         parser = "keep",
         high = {
-          type = "integer",
+          type = "number",
           value = 3
         }
       }, result)
@@ -59,7 +59,7 @@ describe("dice", function()
         rest = "",
         parser = "keep",
         low = {
-          type = "integer",
+          type = "number",
           value = 1
         }
       }, result)
@@ -72,7 +72,7 @@ describe("dice", function()
         rest = "",
         parser = "keep",
         low = {
-          type = "integer",
+          type = "number",
           value = 3
         }
       }, result)
@@ -85,7 +85,7 @@ describe("dice", function()
         rest = "",
         parser = "keep",
         middle = {
-          type = "integer",
+          type = "number",
           value = 1
         }
       }, result)
@@ -98,7 +98,7 @@ describe("dice", function()
         rest = "",
         parser = "keep",
         middle = {
-          type = "integer",
+          type = "number",
           value = 3
         }
       }, result)
@@ -112,7 +112,7 @@ describe("dice", function()
         rest = "",
         parser = "drop",
         high = {
-          type = "integer",
+          type = "number",
           value = 1
         }
       }, result)
@@ -124,7 +124,7 @@ describe("dice", function()
         rest = "",
         parser = "drop",
         high = {
-          type = "integer",
+          type = "number",
           value = 3
         }
       }, result)
@@ -137,7 +137,7 @@ describe("dice", function()
         rest = "",
         parser = "drop",
         low = {
-          type = "integer",
+          type = "number",
           value = 1
         }
       }, result)
@@ -151,7 +151,7 @@ describe("dice", function()
         rest = "",
         parser = "drop",
         low = {
-          type = "integer",
+          type = "number",
           value = 3
         }
       }, result)
@@ -167,7 +167,7 @@ describe("dice", function()
           values = {
             {
               value = {
-                type = "integer",
+                type = "number",
                 value = 3
               },
               operator = "<"
@@ -185,28 +185,28 @@ describe("dice", function()
           values = {
             {
               value = {
-                type = "integer",
+                type = "number",
                 value = 2
               },
               operator = "<"
             },
             {
               value = {
-                type = "integer",
+                type = "number",
                 value = 4
               },
               operator = "="
             },
             {
               value = {
-                type = "integer",
+                type = "number",
                 value = 5
               },
               operator = ">"
             },
             {
               value = {
-                type = "integer",
+                type = "number",
                 value = 6
               },
               operator = ">="
@@ -225,7 +225,7 @@ describe("dice", function()
         rest = "",
         parser = "clamp",
         min = {
-          type = "integer",
+          type = "number",
           value = 2
         },
       }, result)
@@ -238,7 +238,7 @@ describe("dice", function()
         rest = "",
         parser = "clamp",
         max = {
-          type = "integer",
+          type = "number",
           value = 5
         }
       }, result)
@@ -251,11 +251,11 @@ describe("dice", function()
         rest = "",
         parser = "clamp",
         min = {
-          type = "integer",
+          type = "number",
           value = 2
         },
         max = {
-          type = "integer",
+          type = "number",
           value = 5
         }
       }, result)
@@ -280,7 +280,7 @@ describe("dice", function()
         values = {
           {
             value = {
-              type = "integer",
+              type = "number",
               value = 5
             },
             operator = "="
@@ -300,24 +300,24 @@ describe("dice", function()
         values = {
           {
             value = {
-              type = "integer",
+              type = "number",
               value = 4
             },
             type = "value",
             replacement = {
-              type = "integer",
+              type = "number",
               value = 6
             },
             operator = "="
           },
           {
             value = {
-              type = "integer",
+              type = "number",
               value = 5
             },
             type = "value",
             replacement = {
-              type = "integer",
+              type = "number",
               value = 6
             },
             operator = "="
@@ -335,24 +335,24 @@ describe("dice", function()
         values = {
           {
             value = {
-              type = "integer",
+              type = "number",
               value = 5
             },
             type = "value",
             replacement = {
-              type = "integer",
+              type = "number",
               value = 0
             },
             operator = "<"
           },
           {
             value = {
-              type = "integer",
+              type = "number",
               value = 15
             },
             type = "value",
             replacement = {
-              type = "integer",
+              type = "number",
               value = 20
             },
             operator = ">"
@@ -370,18 +370,18 @@ describe("dice", function()
         values = {
           {
             value = {
-              type = "integer",
+              type = "number",
               value = 5
             },
             operator = ">",
             type = "range",
             replacement = {
               from = {
-                type = "integer",
+                type = "number",
                 value = 10
               },
               to = {
-                type = "integer",
+                type = "number",
                 value = 20
               }
             }
@@ -399,18 +399,18 @@ describe("dice", function()
         values = {
           {
             value = {
-              type = "integer",
+              type = "number",
               value = 5
             },
             operator = ">",
             type = "die_roll",
             replacement = {
               quantity = {
-                type = "integer",
+                type = "number",
                 value = 2
               },
               sides = {
-                type = "integer",
+                type = "number",
                 value = 6
               }
             }
@@ -429,7 +429,7 @@ describe("dice", function()
         parser = "explode",
         type = "explode_many",
         quantity = {
-          type = "integer",
+          type = "number",
           value = 1
         },
       }, result)
@@ -442,7 +442,7 @@ describe("dice", function()
       assert.includes({
         rest = "",
         quantity = {
-          type = "integer",
+          type = "number",
           value = 3
         }
       }, result)
@@ -456,14 +456,14 @@ describe("dice", function()
         values = {
           {
             value = {
-              type = "integer",
+              type = "number",
               value = 2
             },
             operator = "<"
           },
           {
             value = {
-              type = "integer",
+              type = "number",
               value = 6
             },
             operator = "="
@@ -481,16 +481,16 @@ describe("dice", function()
             explodes_with = {
               type = "die_roll",
               sides = {
-                type = "integer",
+                type = "number",
                 value = 6
               },
               quantity = {
-                type = "integer",
+                type = "number",
                 value = 2
               },
             },
             value = {
-              type = "integer",
+              type = "number",
               value = 20
             },
             operator = "=",
@@ -510,21 +510,21 @@ describe("dice", function()
             values = {
               {
                 value = {
-                  type = "integer",
+                  type = "number",
                   value = 6
                 },
                 operator = "="
               },
               {
                 value = {
-                  type = "integer",
+                  type = "number",
                   value = 6
                 },
                 operator = "="
               },
               {
                 value = {
-                  type = "integer",
+                  type = "number",
                   value = 5
                 },
                 operator = ">"
@@ -572,20 +572,20 @@ describe("dice", function()
         rest = "",
         parser = "reroll",
         limit = {
-          type = "integer",
+          type = "number",
           value = 2
         },
         values = {
           {
             value = {
-              type = "integer",
+              type = "number",
               value = 2
             },
             operator = "="
           },
           {
             value = {
-              type = "integer",
+              type = "number",
               value = 5
             },
             operator = ">"
@@ -615,14 +615,14 @@ describe("dice", function()
         values = {
           {
             value = {
-              type = "integer",
+              type = "number",
               value = 4
             },
             operator = "<"
           },
           {
             value = {
-              type = "integer",
+              type = "number",
               value = 5
             },
             operator = "="
@@ -641,18 +641,18 @@ describe("dice", function()
         parser = "modifiers",
         drop = {
           high = {
-            type = "integer",
+            type = "number",
             value = 3
           },
           low = {
-            type = "integer",
+            type = "number",
             value = 2
           },
           values = {
             {
               operator = "<",
               value = {
-                type = "integer",
+                type = "number",
                 value = 4
               },
             }
@@ -660,13 +660,13 @@ describe("dice", function()
         },
         keep = {
           low = {
-            type = "integer",
+            type = "number",
             value = 3
           }
         },
         clamp = {
           min = {
-            type = "integer",
+            type = "number",
             value = 2
           }
         },
@@ -675,7 +675,7 @@ describe("dice", function()
             {
               operator = "=",
               value = {
-                type = "integer",
+                type = "number",
                 value = 5
               }
             }
@@ -685,14 +685,14 @@ describe("dice", function()
           values = {
             {
               value = {
-                type = "integer",
+                type = "number",
                 value = 2
               },
               operator = "<"
             },
             {
               value = {
-                type = "integer",
+                type = "number",
                 value = 5
               },
               operator = "="
@@ -701,13 +701,13 @@ describe("dice", function()
         },
         reroll = {
           limit = {
-            type = "integer",
+            type = "number",
             value = 3
           },
           values = {
             {
               value = {
-                type = "integer",
+                type = "number",
                 value = 2
               },
               operator = "="
@@ -718,17 +718,17 @@ describe("dice", function()
           values = {
             {
               value = {
-                type = "integer",
+                type = "number",
                 value = 5
               },
               type = "die_roll",
               replacement = {
                 sides = {
-                  type = "integer",
+                  type = "number",
                   value = 6
                 },
                 quantity = {
-                  type = "integer",
+                  type = "number",
                   value = 2
                 }
               },
@@ -742,7 +742,7 @@ describe("dice", function()
           values = {
             {
               value = {
-                type = "integer",
+                type = "number",
                 value = 4
               },
               operator = "="
@@ -751,16 +751,16 @@ describe("dice", function()
               explodes_with = {
                 type = "die_roll",
                 quantity = {
-                  type = "integer",
+                  type = "number",
                   value = 2
                 },
                 sides = {
-                  type = "integer",
+                  type = "number",
                   value = 8
                 },
               },
               value = {
-                type = "integer",
+                type = "number",
                 value = 20
               },
               operator = "=",
@@ -779,11 +779,11 @@ describe("dice", function()
         rest = "",
         parser = "die",
         quantity = {
-          type = "integer",
+          type = "number",
           value = 2
         },
         sides = {
-          type = "integer",
+          type = "number",
           value = 20
         }
       }, result)
@@ -796,11 +796,11 @@ describe("dice", function()
         rest = "",
         parser = "die",
         quantity = {
-          type = "integer",
+          type = "number",
           value = 1
         },
         sides = {
-          type = "integer",
+          type = "number",
           value = 6
         }
       }, result)
@@ -813,17 +813,17 @@ describe("dice", function()
 
       assert.includes({
         quantity = {
-          type = "integer",
+          type = "number",
           value = 2
         },
         sides = {
-          type = "integer",
+          type = "number",
           value = 20
         },
         modifiers = {
           drop = {
             high = {
-              type = "integer",
+              type = "number",
               value = 1
             }
           }
@@ -844,7 +844,7 @@ describe("dice", function()
             method = method,
             values = {
               {
-                type = "integer",
+                type = "number",
                 value = 1.5,
               }
             }
@@ -971,7 +971,7 @@ describe("dice", function()
             {
               operator = "+",
               value = {
-                type = 'integer',
+                type = "number",
                 value = 2
               }
             },
@@ -1062,11 +1062,11 @@ describe("dice", function()
             value = {
               type = "die_roll",
               quantity = {
-                type = "integer",
+                type = "number",
                 value = 1
               },
               sides = {
-                type = "integer",
+                type = "number",
                 value = 6
               }
             }

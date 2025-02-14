@@ -67,7 +67,7 @@ process_expression = function(definition, output)
     add_math_tokens(definition, output)
   elseif definition.type == "die_roll" then
     add_sub_roll(definition, output)
-  elseif definition.type == "integer" then
+  elseif definition.type == "number" then
     local value = definition.value * (definition.negate and -1 or 1)
     table.insert(output, { type = "number", value = value })
   end

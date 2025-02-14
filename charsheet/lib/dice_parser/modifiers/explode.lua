@@ -37,11 +37,11 @@ local explodeReduced = function(die, rolls, reroll)
       local roll_config = {
         type = "die_roll",
         quantity = {
-          type = "integer",
+          type = "number",
           value = 1
         },
         sides = {
-          type = "integer",
+          type = "number",
           value = roll.value
         }
       }

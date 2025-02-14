@@ -44,7 +44,7 @@ return function(die, rolls, reroll)
         -- TODO: should rerolls consider modifiers?
         local replacement = {
           quantity = {
-            type = "integer",
+            type = "number",
             value = 1
           },
           sides = die.sides,

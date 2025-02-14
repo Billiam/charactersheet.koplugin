@@ -43,13 +43,13 @@ end
 local integer_fields = { "value", "min", "max", "middle", "limit" }
 
 function DiceRoller:_processVariables(tree, data)
-  if tree.type == "integer" then
+  if tree.type == "number" then
     return tree
   end
 
   if tree.type == "variable" then
     return {
-      type = "integer",
+      type = "number",
       variable = table.concat(tree.values, "."),
       value = self:getFixedValue(tree, data)
     }
@@ -140,7 +140,7 @@ function DiceRoller:range(node)
 end
 
 function DiceRoller:getFixedValue(node, data)
-  if node.type == "integer" then
+  if node.type == "number" then
     return node.value
   elseif node.type == "variable" then
     return _t.dig(data, table.unpack(node.values)) or 0
@@ -160,7 +160,7 @@ function DiceRoller:getValue(node)
       result = operations.math[child.operator](result, self:getValue(child.value))
     end
     return result
-  elseif node.type == "integer" then
+  elseif node.type == "number" then
     return node.value * (node.negate and -1 or 1)
   elseif node.type == "die_roll" then
     local result = self:roll(node)

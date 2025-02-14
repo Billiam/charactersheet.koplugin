@@ -47,7 +47,7 @@ local function includes(state, arguments, level)
   local argcnt = arguments.n
   assert(argcnt > 1, say("assertion.internal.argtolittle", { "includes", 2, tostring(argcnt) }), level)
 
-  if type(arguments[1]) == 'table' and type(arguments[2]) == 'table' then
+  if type(arguments[1]) == "table" and type(arguments[2]) == "table" then
     local result, crumbs = deep_includes(arguments[1], arguments[2])
 
     -- switch arguments for proper output message

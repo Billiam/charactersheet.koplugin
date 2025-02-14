@@ -4,14 +4,19 @@ local Parsers = require("charsheet/lib/dice_parser/parser")
 local P = Parsers.P
 local lazyParser = Parsers.lazy
 
-local digits = function()
+local numberStr = function()
   return c.concatenate(c.sequence(c.match("^%d+"), c.optional(c.match("^%.%d+"))))
+end
+
+local digitStr = function()
+  return c.match("^%d+")
 end
 
 local toNumber = function()
   return function(result)
     local r = _t.clone(result)
     r.value = tonumber(r.value)
+    r.type = "number"
     return r
   end
 end
@@ -66,8 +71,12 @@ local method = function()
   )
 end
 
-local digitsAsInt = P("integer", function()
-  return c.map(digits(), toNumber())
+local integer = P("integer", function()
+  return c.map(digitStr(), toNumber())
+end)
+
+local number = P("number", function()
+  return c.map(numberStr(), toNumber())
 end)
 
 local variableChars = P("", function()
@@ -95,7 +104,11 @@ local interpolation = function()
 end
 
 local fixedValue = P("fixed_value", function()
-  return c.any(digitsAsInt(), interpolation(), method())
+  return c.any(number(), interpolation(), method())
+end)
+
+local fixedInteger = P("fixed_integer", function()
+  return c.any(integer(), interpolation(), method())
 end)
 
 local inequality = P("inequality", function()
@@ -122,11 +135,11 @@ end)
 
 local defaultInteger = function(default)
   return c.map(
-    c.optional(fixedValue()),
+    c.optional(fixedInteger()),
     function(result)
       if not result.value and not result.values then
         return {
-          type = "integer",
+          type = "number",
           value = default,
           rest = result.rest
         }
@@ -140,7 +153,7 @@ local die = P("die", function()
   return c.map(c.sequence(
     defaultInteger(1),
     c.literal("d"),
-    fixedValue()
+    fixedInteger()
   ), function(result)
     return {
       rest = result.rest,
@@ -397,7 +410,7 @@ local buildExplosionParser = function(name, prefix)
     return c.dropLeftValue(1, c.sequence(
       prefix,
       c.optional(explodeConditions()),
-      c.optional(fixedValue()),
+      c.optional(fixedInteger()),
       c.optional(".")
     ))
   end)
@@ -439,7 +452,7 @@ local explode = P("explode", function()
       end
 
       r.quantity = result.values[2].type and result.values[2] or {
-        type = "integer",
+        type = "number",
         value = 1
       }
 
