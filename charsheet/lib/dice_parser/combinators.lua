@@ -1,5 +1,15 @@
 local _t = require("charsheet/lib/table_util")
 
+local method_cache = function(builder)
+  local cache = {}
+  return function(...)
+    if not cache[...] then
+      cache[...] = builder(...)
+    end
+    return cache[...]
+  end
+end
+
 local map = function(parser, m)
   return function(str)
     local result = parser(str)
@@ -20,7 +30,7 @@ local label = function(name, parser)
   end
 end
 
-local literal = function(chars)
+local literal = method_cache(function(chars)
   return label("literal", function(str)
     local begin_chars = str:sub(1, #chars)
     if begin_chars == chars then
@@ -30,7 +40,7 @@ local literal = function(chars)
       }
     end
   end)
-end
+end)
 
 local toLiteral = function(parser)
   if type(parser) == "string" then
@@ -39,7 +49,7 @@ local toLiteral = function(parser)
   return parser
 end
 
-local match = function(pattern)
+local match = method_cache(function(pattern)
   -- TODO captures
   pattern = pattern:sub(1, 1) == "^" and pattern or ("^" .. pattern)
 
@@ -54,7 +64,7 @@ local match = function(pattern)
       --  return error("Could not find match for pattern " .. pattern)
     end
   end)
-end
+end)
 
 local any = function(...)
   local parsers = _t.map({ ... }, toLiteral)
@@ -76,14 +86,14 @@ local any = function(...)
   end
 end
 
-local optional = function(parser)
+local optional = method_cache(function(parser)
   parser = toLiteral(parser)
   return function(str)
     return parser(str) or {
       rest = str
     }
   end
-end
+end)
 
 local concatenate = function(parser)
   return map(parser, function(result)
@@ -118,7 +128,6 @@ end
 local captureValues = function(name, parser)
   return capture(name, "values", parser)
 end
-
 
 -- TODO: don't need values array, but might require an unpack
 local sequence = function(...)
@@ -268,7 +277,7 @@ local dropLeftValue = function(n, parser)
   end)
 end
 
-local ignore = function(parser)
+local ignore = method_cache(function(parser)
   parser = toLiteral(parser)
   return function(str)
     local result = parser(str)
@@ -278,7 +287,7 @@ local ignore = function(parser)
       }
     end
   end
-end
+end)
 
 local list = function(separator, parser)
   separator = toLiteral(separator)
