@@ -1,9 +1,27 @@
 local _t = require("charsheet/lib/table_util")
-local Parsers = require("charsheet/lib/dice_parser/parser")
-local P = Parsers.P
 
-local literal = P("literal", function(chars)
+local map = function(parser, m)
   return function(str)
+    local result = parser(str)
+    if result then
+      return m(result)
+    end
+  end
+end
+
+local label = function(name, parser)
+  return function(str)
+    local result = parser(str)
+    if result then
+      result.parser = name
+    end
+
+    return result
+  end
+end
+
+local literal = function(chars)
+  return label("literal", function(str)
     local begin_chars = str:sub(1, #chars)
     if begin_chars == chars then
       return {
@@ -11,8 +29,8 @@ local literal = P("literal", function(chars)
         rest = str:sub(#chars + 1)
       }
     end
-  end
-end)
+  end)
+end
 
 local toLiteral = function(parser)
   if type(parser) == "string" then
@@ -21,10 +39,11 @@ local toLiteral = function(parser)
   return parser
 end
 
-local match = P("match", function(pattern)
+local match = function(pattern)
   -- TODO captures
   pattern = pattern:sub(1, 1) == "^" and pattern or ("^" .. pattern)
-  return function(str)
+
+  return label("match", function(str)
     local start, finish = str:find(pattern)
     if start then
       return {
@@ -34,8 +53,8 @@ local match = P("match", function(pattern)
       --else
       --  return error("Could not find match for pattern " .. pattern)
     end
-  end
-end)
+  end)
+end
 
 local any = function(...)
   local parsers = _t.map({ ... }, toLiteral)
@@ -63,15 +82,6 @@ local optional = function(parser)
     return parser(str) or {
       rest = str
     }
-  end
-end
-
-local map = function(parser, m)
-  return function(str)
-    local result = parser(str)
-    if result then
-      return m(result)
-    end
   end
 end
 
@@ -316,6 +326,7 @@ return {
   concatenate = concatenate,
   dropLeftValue = dropLeftValue,
   ignore = ignore,
+  label = label,
   list = list,
   literal = literal,
   map = map,

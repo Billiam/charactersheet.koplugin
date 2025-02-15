@@ -20,7 +20,7 @@ function DiceRoller:new(definition, random)
 end
 
 function DiceRoller:fromString(str, random)
-  local definition = dice.expression()(str)
+  local definition = dice.expression(str)
   return self:new(definition, random)
 end
 

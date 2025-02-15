@@ -1,45 +1,71 @@
 local c = require("charsheet/lib/dice_parser/combinators")
 local _t = require("charsheet/lib/table_util")
-local Parsers = require("charsheet/lib/dice_parser/parser")
-local P = Parsers.P
-local lazyParser = Parsers.lazy
 
-local numberStr = function()
-  return c.concatenate(c.sequence(c.match("^%d+"), c.optional(c.match("^%.%d+"))))
+local toNumber = function(result)
+  local r = _t.clone(result)
+  r.value = tonumber(r.value)
+  r.type = "number"
+  return r
 end
 
-local digitStr = function()
-  return c.match("^%d+")
+local appendMath = function(operator, type)
+  return c.map(c.sequence(operator, type), function(result)
+    return {
+      rest = result.rest,
+      operator = result.values[1].value,
+      value = result.values[2]
+    }
+  end)
 end
 
-local toNumber = function()
-  return function(result)
-    local r = _t.clone(result)
-    r.value = tonumber(r.value)
-    r.type = "number"
-    return r
-  end
+local buildArithmetic = function(name, type, operator)
+  return c.label(name, c.map(
+    c.sequence(type, c.nOrMore(1, appendMath(operator, type))), function(result)
+      local r = {
+        type = result.parser,
+        rest = result.rest,
+        values = {
+          {
+            operator = "+",
+            value = result.values[1]
+          },
+        }
+      }
+      for i, v in ipairs(result.values[2].values) do
+        r.values[i + 1] = v
+      end
+      return r
+    end)
+  )
 end
 
-local lazyBracketDieRoll
-local lazyBracketExpression
-local lazyParenExpression
-local lazyMultipleExpressions
+local numberStr = c.concatenate(c.sequence(c.match("^%d+"), c.optional(c.match("^%.%d+"))))
+
+local digitStr = c.match("^%d+")
+
+local expressionDefinition
+local expression = function(str)
+  return expressionDefinition(str)
+end
+
+local dieRollDefinition
+local dieRoll = function(str) return dieRollDefinition(str) end
+
+local multipleExpressions = c.label("multiple_expressions", c.list(",", expression))
 
 local buildMethod = function(...)
   local names = { ... }
   local method_name = #names > 1 and c.any(...) or c.literal(names[1])
-  return function()
-    return c.map(c.sequence(method_name, c.between("(", ")", lazyMultipleExpressions())),
-      function(result)
-        return {
-          rest = result.rest,
-          type = "method",
-          method = names[1],
-          values = result.values[2].values
-        }
-      end)
-  end
+
+  return c.map(c.sequence(method_name, c.between("(", ")", multipleExpressions)),
+    function(result)
+      return {
+        rest = result.rest,
+        type = "method",
+        method = names[1],
+        values = result.values[2].values
+      }
+    end)
 end
 
 local abs = buildMethod("abs")
@@ -64,49 +90,40 @@ local sin = buildMethod("sin")
 local sqrt = buildMethod("sqrt")
 local tan = buildMethod("tan")
 
-local method = function()
-  return c.any(
-    abs(),
-    acos(),
-    asin(),
-    atan(),
-    ceil(),
-    clampMethod(),
-    cos(),
-    floor(),
-    lerp(),
-    mod(),
-    pow(),
-    rnd(),
-    roundEven(),
-    roundFromZero(),
-    roundOdd(),
-    roundToZero(),
+local method = c.any(
+  abs,
+  acos,
+  asin,
+  atan,
+  ceil,
+  clampMethod,
+  cos,
+  floor,
+  lerp,
+  mod,
+  pow,
+  rnd,
+  roundEven,
+  roundFromZero,
+  roundOdd,
+  roundToZero,
 
-    round(),
+  round,
 
-    sign(),
-    sin(),
-    sqrt(),
-    tan()
-  )
-end
+  sign,
+  sin,
+  sqrt,
+  tan
+)
 
-local integer = P("integer", function()
-  return c.map(digitStr(), toNumber())
-end)
+local integer = c.label("integer", c.map(digitStr, toNumber))
+local number = c.label("number", c.map(numberStr, toNumber))
 
-local number = P("number", function()
-  return c.map(numberStr(), toNumber())
-end)
+local variableChars = c.match("^[%w_-]+")
 
-local variableChars = P("", function()
-  return c.match("^[%w_-]+")
-end)
-
-local variables = P("variable", function()
-  return c.map(
-    c.list(".", variableChars()),
+local variables = c.label("variable",
+  c.map(
+    c.list(".", variableChars),
     function(result)
       local r = {
         rest = result.rest,
@@ -118,45 +135,35 @@ local variables = P("variable", function()
       return r
     end
   )
-end)
+)
 
-local interpolation = function()
-  return c.between(c.literal("{{"), c.literal("}}"), variables())
-end
+local interpolation = c.between(c.literal("{{"), c.literal("}}"), variables)
 
-local fixedValue = P("fixed_value", function()
-  return c.any(number(), interpolation(), method())
-end)
+local fixedValue = c.label("fixed_value", c.any(number, interpolation, method))
 
-local fixedInteger = P("fixed_integer", function()
-  return c.any(integer(), interpolation(), method())
-end)
+local fixedInteger = c.label("fixed_integer", c.any(integer, interpolation, method))
 
-local inequality = P("inequality", function()
-  return c.concatenate(
-    c.sequence(
-      c.any(">", "<"),
-      c.optional("=")
-    )
+local inequality = c.label("inequality", c.concatenate(
+  c.sequence(
+    c.any(">", "<"),
+    c.optional("=")
   )
-end)
+))
 
-local numberInequality = P("number_inequality", function()
-  return c.map(c.sequence(
-    c.optional(inequality()),
-    fixedValue()
-  ), function(result)
-    local r = _t.clone(result)
-    r.inequality = result.values[1].value
-    r.value = result.values[2]
-    r.values = nil
-    return r
-  end)
-end)
+local numberInequality = c.label("number_inequality", c.map(c.sequence(
+  c.optional(inequality),
+  fixedValue
+), function(result)
+  local r = _t.clone(result)
+  r.inequality = result.values[1].value
+  r.value = result.values[2]
+  r.values = nil
+  return r
+end))
 
 local defaultInteger = function(default)
   return c.map(
-    c.optional(fixedInteger()),
+    c.optional(fixedInteger),
     function(result)
       if not result.value and not result.values then
         return {
@@ -170,82 +177,85 @@ local defaultInteger = function(default)
   )
 end
 
-local die = P("die", function()
-  return c.map(c.sequence(
-    defaultInteger(1),
-    c.literal("d"),
-    fixedInteger()
-  ), function(result)
+local bracketExpression = c.between("[", "]", expression)
+local parenExpression = c.between("(", ")", expression)
+
+local equalsExpression = c.label("is_expression", c.map(c.sequence(
+  "=",
+  bracketExpression
+), function(result)
+  return result.values[2]
+end))
+
+local die = c.label("die", c.map(c.sequence(
+  defaultInteger(1),
+  c.literal("d"),
+  fixedInteger
+), function(result)
+  return {
+    rest = result.rest,
+    quantity = result.values[1],
+    sides = result.values[3],
+  }
+end))
+
+local keepHighest = c.label("keep_highest", c.map(
+  c.nthValue(2, c.sequence(c.literal("K"), defaultInteger(1))),
+  function(result)
     return {
-      rest = result.rest,
-      quantity = result.values[1],
-      sides = result.values[3],
+      type = "keep",
+      high = result,
+      rest = result.rest
     }
-  end)
-end)
+  end
+))
 
-local keepHighest = P("keep_highest", function()
-  return c.map(c.nthValue(2, c.sequence(c.literal("K"), defaultInteger(1))),
-    function(result)
-      return {
-        type = "keep",
-        high = result,
-        rest = result.rest
-      }
-    end
-  )
-end)
+local keepLowest = c.label("keep_lowest", c.map(
+  c.nthValue(2, c.sequence(c.literal("KL"), defaultInteger(1))),
+  function(result)
+    return {
+      type = "keep",
+      low = result,
+      rest = result.rest
+    }
+  end
+))
 
-local keepLowest = P("keep_lowest", function()
-  return c.map(c.nthValue(2, c.sequence(c.literal("KL"), defaultInteger(1))),
-    function(result)
-      return {
-        type = "keep",
-        low = result,
-        rest = result.rest
-      }
-    end
-  )
-end)
+local keepMiddle = c.label("keep_middle", c.map(
+  c.nthValue(2, c.sequence(c.literal("KM"), defaultInteger(1))),
+  function(result)
+    return {
+      type = "keep",
+      middle = result,
+      rest = result.rest
+    }
+  end
+))
 
-local keepMiddle = P("keep_middle", function()
-  return c.map(c.nthValue(2, c.sequence(c.literal("KM"), defaultInteger(1))),
-    function(result)
-      return {
-        type = "keep",
-        middle = result,
-        rest = result.rest
-      }
-    end
-  )
-end)
+local keep = c.label("keep", c.any(keepLowest, keepMiddle, keepHighest))
 
-local keep = P("keep", function()
-  return c.any(keepLowest(), keepMiddle(), keepHighest())
-end)
-
-local dropHighest = P("drop_highest", function()
-  return c.map(c.nthValue(2, c.sequence(c.literal("H"), defaultInteger(1))), function(result)
+local dropHighest = c.label("drop_highest", c.map(
+  c.nthValue(2, c.sequence(c.literal("H"), defaultInteger(1))), function(result)
     return {
       type = "drop",
       high = result,
       rest = result.rest
     }
-  end)
-end)
+  end
+))
 
-local dropLowest = P("drop_lowest", function()
-  return c.map(c.nthValue(2, c.sequence(c.literal("L"), defaultInteger(1))), function(result)
+local dropLowest = c.label("drop_lowest", c.map(
+  c.nthValue(2, c.sequence(c.literal("L"), defaultInteger(1))), function(result)
     return {
       type = "drop",
       low = result,
       rest = result.rest
     }
-  end)
-end)
+  end
+))
 
-local dropRolls = P("drop_rolls", function()
-  return c.map(c.list(",", numberInequality()), function(result)
+local dropRolls = c.label("drop_rolls", c.map(
+  c.list(",", numberInequality), function(result)
     local r = _t.clone(result)
     r.values = _t.map(result.values, function(option)
       return {
@@ -254,51 +264,47 @@ local dropRolls = P("drop_rolls", function()
       }
     end)
     return r
-  end)
-end)
+  end
+))
 
-local dropCondition = P("drop_condition", function()
-  return c.map(
-    c.dropLeftValue(1, c.sequence(c.literal("D"), c.between("{", "}", dropRolls()))),
-    function(result)
-      local r = _t.clone(result)
-      return {
-        type = "drop",
-        rest = result.rest,
-        values = result.values[1].values
-      }
-    end)
-end)
+local dropCondition = c.label("drop_condition", c.map(
+  c.dropLeftValue(1, c.sequence(c.literal("D"), c.between("{", "}", dropRolls))),
+  function(result)
+    return {
+      type = "drop",
+      rest = result.rest,
+      values = result.values[1].values
+    }
+  end
+))
 
-local drop = P("drop", function()
-  return c.any(dropHighest(), dropLowest(), dropCondition())
-end)
+local drop = c.label("drop", c.any(dropHighest, dropLowest, dropCondition))
 
-local clamp = P("clamp", function()
-  return c.map(c.dropLeftValue(1, c.sequence(c.ignore("C"), numberInequality(), c.optional(numberInequality()))),
-    function(result)
-      local r = {
-        rest = result.rest
-      }
-      for _, condition in ipairs(result.values) do
-        if condition.value then
-          if condition.inequality:sub(1, 1) == ">" then
-            r.max = condition.value
-          else
-            r.min = condition.value
-          end
+local clamp = c.label("clamp", c.map(
+  c.dropLeftValue(1, c.sequence(c.ignore("C"), numberInequality, c.optional(numberInequality))),
+  function(result)
+    local r = {
+      rest = result.rest
+    }
+    for _, condition in ipairs(result.values) do
+      if condition.value then
+        if condition.inequality:sub(1, 1) == ">" then
+          r.max = condition.value
+        else
+          r.min = condition.value
         end
       end
-
-      return r
     end
-  )
-end)
 
-local range = P("range", function()
-  return c.map(c.sequence(
-    fixedValue(), "..", fixedValue()
-  ), function(result)
+    return r
+  end
+))
+
+local range = c.label("range", c.map(
+  c.sequence(
+    fixedValue, "..", fixedValue
+  ),
+  function(result)
     -- TODO clone in map
     local r = _t.clone(result)
     r.from = result.values[1]
@@ -306,82 +312,14 @@ local range = P("range", function()
     r.values = nil
 
     return r
-  end)
-end)
+  end
+))
 
-local replacementValue = P("replacement_value", function()
-  return c.any(range(), fixedValue(), lazyBracketDieRoll())
-end)
-
--- TODO allow string value replacements
-local valueReplacement = P("value_replacement", function()
-  return c.map(c.nthValue(2, c.sequence(
-    "V",
-    c.between("{", "}",
-      c.list(
-        ",",
-        c.sequence(
-          c.optional(c.any("<", ">")),
-          fixedValue(),
-          "=",
-          replacementValue()
-        )
-      )
-    )
-  )), function(result)
-    local r = {
-      rest = result.rest
-    }
-    r.values = _t.map(result.values, function(replacement)
-      local parsed_replacement = replacement.values[4]
-      local value = {
-        value = replacement.values[2],
-        operator = replacement.values[1].value or "=",
-      }
-
-      if parsed_replacement.type == "range" then
-        value.replacement = {
-          from = parsed_replacement.from,
-          to = parsed_replacement.to,
-        }
-        value.type = "range"
-      elseif parsed_replacement.type == "die_roll" then
-        value.replacement = _t.clone(parsed_replacement)
-        value.type = "die_roll"
-      else
-        value.replacement = parsed_replacement
-        value.type = "value"
-      end
-
-      return value
-    end)
-
-    return r
-  end)
-end)
-
-local unique = P("unique", function()
-  return c.map(c.sequence(c.literal("U"),
-    c.optional(c.between("{", "}",
-      c.list(",", numberInequality())
-    ))), function(result)
-    local r = {
-      rest = result.rest,
-      values = {}
-    }
-    if result.values[2].values then
-      for i, v in ipairs(result.values[2].values) do
-        r.values[i] = { value = v.value, operator = v.inequality or "=" }
-      end
-    end
-    return r
-  end)
-end)
-
-local explodeRerollPattern = P("explode_reroll_pattern", function()
-  return c.map(c.between("(", ")",
-    c.list(",", numberInequality())
-  ), function(result)
+local explodeRerollPattern = c.label("explode_reroll_pattern", c.map(
+  c.between("(", ")",
+    c.list(",", numberInequality)
+  ),
+  function(result)
     return {
       rest = result.rest,
       type = "pattern",
@@ -392,60 +330,50 @@ local explodeRerollPattern = P("explode_reroll_pattern", function()
         }
       end)
     }
-  end)
-end)
+  end
+))
 
-local isExpression = P("is_expression", function()
-  return c.map(c.sequence(
-    "=",
-    lazyBracketExpression()
-  ), function(result)
-    return result.values[2]
-  end)
-end)
-
-local explodeConditions = P("explode_conditions", function()
-  return c.between("{", "}",
-    c.list(",",
-      c.map(
-        c.sequence(
-          c.any(
-            explodeRerollPattern(),
-            numberInequality()
-          ),
-          c.optional(
-            isExpression()
-          )
-        ), function(result)
-          if result.values[2].value == nil and result.values[2].parser == nil then
-            result.values[2] = nil
-          end
-          return result
-        end)
-    )
+local explodeConditions = c.label("explode_conditions", c.between("{", "}",
+  c.list(",",
+    c.map(
+      c.sequence(
+        c.any(
+          explodeRerollPattern,
+          numberInequality
+        ),
+        c.optional(
+          equalsExpression
+        )
+      ), function(result)
+        if result.values[2].value == nil and result.values[2].parser == nil then
+          result.values[2] = nil
+        end
+        return result
+      end)
   )
-end)
+))
 
 local buildExplosionParser = function(name, prefix)
-  return P(name, function()
-    return c.dropLeftValue(1, c.sequence(
-      prefix,
-      c.optional(explodeConditions()),
-      c.optional(fixedInteger()),
-      c.optional(".")
-    ))
-  end)
+  return c.label(name,
+    c.dropLeftValue(1,
+      c.sequence(
+        prefix,
+        c.optional(explodeConditions),
+        c.optional(fixedInteger),
+        c.optional(".")
+      )
+    )
+  )
 end
 
 local explodeMany = buildExplosionParser("explode_many", "!")
 local explodeOnce = buildExplosionParser("explode_once", "!!")
 
-local explodeReduced = P("explode_reduced", function()
-  return c.literal("!!!")
-end)
+local explodeReduced = c.label("explode_reduced", c.literal("!!!"))
 
-local explode = P("explode", function()
-  return c.map(c.any(explodeReduced(), explodeOnce(), explodeMany()), function(result)
+local explode = c.label("explode", c.map(
+  c.any(explodeReduced, explodeOnce, explodeMany),
+  function(result)
     local r = {
       type = result.type,
       rest = result.rest
@@ -483,17 +411,17 @@ local explode = P("explode", function()
     end
 
     return r
-  end)
-end)
+  end
+))
 
-local reroll = P("reroll", function()
-  return c.map(c.dropLeftValue(1,
+local reroll = c.label("reroll", c.map(
+  c.dropLeftValue(1,
     c.sequence(
       "R",
       c.between("{", "}",
-        c.list(",", numberInequality())
+        c.list(",", numberInequality)
       ),
-      c.optional(numberInequality())
+      c.optional(numberInequality)
     )
   ), function(result)
     local r = {
@@ -510,15 +438,15 @@ local reroll = P("reroll", function()
     end
 
     return r
-  end)
-end)
+  end
+))
 
-local count = P("count", function()
-  return c.map(c.dropLeftValue(1,
+local count = c.label("count", c.map(
+  c.dropLeftValue(1,
     c.sequence(
       "#",
       c.optional(c.between("{", "}",
-        c.list(",", numberInequality())
+        c.list(",", numberInequality)
       ))
     )
   ), function(result)
@@ -537,26 +465,95 @@ local count = P("count", function()
     end
 
     return r
-  end)
-end)
+  end
+))
 
-local dieModifier = P("modifiers", function()
-  return c.map(c.nOrMoreUnique(0,
-    clamp(),
-    count(),
+local bracketDieRoll = c.between("[", "]", dieRoll)
 
-    keepLowest(),
-    keepMiddle(),
-    keepHighest(),
+local replacementValue = c.label("replacement_value", c.any(range, fixedValue, bracketDieRoll))
 
-    dropLowest(),
-    dropHighest(),
-    dropCondition(),
+-- TODO allow string value replacements
+local valueReplacement = c.label("value_replacement", c.map(
+  c.nthValue(2, c.sequence(
+    "V",
+    c.between("{", "}",
+      c.list(
+        ",",
+        c.sequence(
+          c.optional(c.any("<", ">")),
+          fixedValue,
+          "=",
+          replacementValue
+        )
+      )
+    )
+  )), function(result)
+    local r = {
+      rest = result.rest
+    }
+    r.values = _t.map(result.values, function(replacement)
+      local parsed_replacement = replacement.values[4]
+      local value = {
+        value = replacement.values[2],
+        operator = replacement.values[1].value or "=",
+      }
 
-    explode(),
-    reroll(),
-    unique(),
-    valueReplacement()
+      if parsed_replacement.type == "range" then
+        value.replacement = {
+          from = parsed_replacement.from,
+          to = parsed_replacement.to,
+        }
+        value.type = "range"
+      elseif parsed_replacement.type == "die_roll" then
+        value.replacement = _t.clone(parsed_replacement)
+        value.type = "die_roll"
+      else
+        value.replacement = parsed_replacement
+        value.type = "value"
+      end
+
+      return value
+    end)
+
+    return r
+  end
+))
+
+local unique = c.label("unique", c.map(
+  c.sequence(c.literal("U"),
+    c.optional(c.between("{", "}",
+      c.list(",", numberInequality)
+    ))), function(result)
+    local r = {
+      rest = result.rest,
+      values = {}
+    }
+    if result.values[2].values then
+      for i, v in ipairs(result.values[2].values) do
+        r.values[i] = { value = v.value, operator = v.inequality or "=" }
+      end
+    end
+    return r
+  end
+))
+
+local dieModifier = c.label("modifiers", c.map(
+  c.nOrMoreUnique(0,
+    clamp,
+    count,
+
+    keepLowest,
+    keepMiddle,
+    keepHighest,
+
+    dropLowest,
+    dropHighest,
+    dropCondition,
+
+    explode,
+    reroll,
+    unique,
+    valueReplacement
   ), function(result)
     local r = {
       rest = result.rest,
@@ -571,125 +568,51 @@ local dieModifier = P("modifiers", function()
     end
 
     return r
-  end)
-end)
+  end
+))
 
-local dieRoll = P("die_roll", function()
-  return c.map(c.sequence(die(), c.optional(dieModifier())), function(result)
+dieRollDefinition = c.label("die_roll", c.map(
+  c.sequence(die, c.optional(dieModifier)),
+  function(result)
     local r = _t.clone(result.values[1])
     r.modifiers = result.values[2]
     r.rest = result.rest
     return r
-  end)
-end)
-local bracketDieRoll = function()
-  return c.between("[", "]", dieRoll())
-end
-lazyBracketDieRoll = function()
-  return lazyParser(bracketDieRoll)
-end
+  end
+))
 
-local value = P("value", function()
-  return c.any(dieRoll(), fixedValue())
-end)
+local value = c.label("value", c.any(dieRoll, fixedValue))
 
-local negatedValue = P("negated_value", function()
-  return c.map(c.sequence("-", value()), function(result)
+local negatedValue = c.label("negated_value", c.map(
+  c.sequence("-", value),
+  function(result)
     local r = _t.clone(result.values[2])
     r.rest = result.rest
     r.negate = true
     return r
-  end)
-end)
-local signedValue = P("signed_value", function()
-  return c.any(negatedValue(), value())
-end)
-local multiplicationOperator = P("multiplication_operator", function()
-  return c.any("*", "/")
-end)
-local exponentiationOperator = P("exponentiation_operator", function()
-  return c.literal("^")
-end)
+  end
+))
 
-local additionOperator = P("addition_operator", function()
-  return c.any("+", "-")
-end)
+local signedValue = c.label("signed_value", c.any(negatedValue, value))
 
-local factor = function()
-  return c.any(signedValue(), lazyParenExpression())
-end
+local multiplicationOperator = c.label("multiplication_operator", c.any("*", "/"))
 
-local appendMath = function(operator, type)
-  return c.map(c.sequence(operator(), type()), function(result)
-    return {
-      rest = result.rest,
-      operator = result.values[1].value,
-      value = result.values[2]
-    }
-  end)
-end
+local exponentiationOperator = c.label("exponentiation_operator", c.literal("^"))
 
-local buildArithmetic = function(name, type, operator)
-  return P(name, function()
-    return c.map(c.sequence(type(), c.nOrMore(1, appendMath(operator, type))), function(result)
-      local r = {
-        type = result.parser,
-        rest = result.rest,
-        values = {
-          {
-            operator = "+",
-            value = result.values[1]
-          },
-        }
-      }
-      for i, v in ipairs(result.values[2].values) do
-        r.values[i + 1] = v
-      end
-      return r
-    end)
-  end)
-end
+local additionOperator = c.label("addition_operator", c.any("+", "-"))
 
-
---min/max
---check/compare (?)
---clamp (val, min, max)
---sin,cos,tan,asin,acos,atan,atan2(,),tanh,exp(,),sqrt,ln, abs, pow(,), lerp(,,), mod(,), sign
-
+local factor = c.any(signedValue, parenExpression)
 
 local exponentiation = buildArithmetic("exponentiation", factor, exponentiationOperator)
-local coefficient = function()
-  return c.any(exponentiation(), factor())
-end
+
+local coefficient = c.any(exponentiation, factor)
 
 local multiplication = buildArithmetic("multiplication", coefficient, multiplicationOperator)
-local term = function()
-  return c.any(multiplication(), coefficient())
-end
+local term = c.any(multiplication, coefficient)
 
 local addition = buildArithmetic("addition", term, additionOperator)
-local expression = function()
-  return c.any(addition(), term())
-end
 
-local bracketExpression = function()
-  return c.between("[", "]", expression())
-end
-lazyBracketExpression = function()
-  return lazyParser(bracketExpression)
-end
-local parenExpression = function()
-  return c.between("(", ")", expression())
-end
-lazyParenExpression = function()
-  return lazyParser(parenExpression)
-end
-local multipleExpressions = P("multiple_expressions", function()
-  return c.list(",", expression())
-end)
-lazyMultipleExpressions = function()
-  return lazyParser(multipleExpressions)
-end
+expressionDefinition = c.any(addition, term)
 
 return {
   clamp = clamp,

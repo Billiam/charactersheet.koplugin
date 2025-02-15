@@ -213,7 +213,7 @@ describe("DiceRoller", function()
   end)
 
   it("caches results in tree definition", function()
-    local definition = dice.expression()("2+2d6")
+    local definition = dice.expression("2+2d6")
     assert.is_nil(definition.values[2].value.roll_result)
     local _, new_definition = DiceRoller:new(definition, maxRandom):run()
 
@@ -421,7 +421,7 @@ describe("DiceRoller", function()
     describe("reroll", function()
       it("rerolls selected values", function()
         local rolls = fixRolls({ 1, 2, 4, 8 })
-        local definition = dice.expression()("3d8R{2}")
+        local definition = dice.expression("3d8R{2}")
         local result, new_definition = DiceRoller:new(definition, rolls):run()
 
         assert.equals(13, result)
@@ -430,7 +430,7 @@ describe("DiceRoller", function()
 
       it("rerolls selected ranges", function()
         local rolls = fixRolls({ 1, 2, 4, 1 })
-        local definition = dice.expression()("3d8R{>3}")
+        local definition = dice.expression("3d8R{>3}")
         local result, new_definition = DiceRoller:new(definition, rolls):run()
 
         assert.equals(4, result)
@@ -439,7 +439,7 @@ describe("DiceRoller", function()
 
       it("limits retries", function()
         local rolls = fixRolls({ 1, 3, 3, 3, 100 })
-        local definition = dice.expression()("2d8R{3}2")
+        local definition = dice.expression("2d8R{3}2")
         local result, new_definition = DiceRoller:new(definition, rolls):run()
 
         assert.equals(4, result)
@@ -447,7 +447,7 @@ describe("DiceRoller", function()
       end)
 
       it("limits retries by default", function()
-        local definition = dice.expression()("2d8R{8}")
+        local definition = dice.expression("2d8R{8}")
         local result, new_definition = DiceRoller:new(definition, maxRandom):run()
 
         assert.equals(16, result)
@@ -456,7 +456,7 @@ describe("DiceRoller", function()
 
       it("supports variables", function()
         local rolls = fixRolls({ 1, 2, 4, 8 })
-        local definition = dice.expression()("3d8R{{{reroll}}}")
+        local definition = dice.expression("3d8R{{{reroll}}}")
         local result, new_definition = DiceRoller:new(definition, rolls):run({ reroll = 2 })
 
         assert.equals(13, result)
@@ -467,7 +467,7 @@ describe("DiceRoller", function()
     describe("unique", function()
       it("does not affect rolls when pool is unique", function()
         local rolls = fixRolls({ 1, 2, 4, 8, 300 })
-        local definition = dice.expression()("4d8U")
+        local definition = dice.expression("4d8U")
         local result = DiceRoller:new(definition, rolls):run()
 
         assert.equals(15, result)
@@ -475,7 +475,7 @@ describe("DiceRoller", function()
 
       it("rerolls non-unique values", function()
         local rolls = fixRolls({ 1, 2, 2, 4, 8 })
-        local definition = dice.expression()("4d8U")
+        local definition = dice.expression("4d8U")
         local result = DiceRoller:new(definition, rolls):run()
 
         assert.equals(15, result)
@@ -483,7 +483,7 @@ describe("DiceRoller", function()
 
       it("ignores specific values", function()
         local rolls = fixRolls({ 2, 2, 4, 4, 5 })
-        local definition = dice.expression()("4d8U{2}")
+        local definition = dice.expression("4d8U{2}")
         local result, new_definition = DiceRoller:new(definition, rolls):run()
 
         assert.equals(13, result)
@@ -492,7 +492,7 @@ describe("DiceRoller", function()
 
       it("supports variables", function()
         local rolls = fixRolls({ 2, 2, 4, 4, 5 })
-        local definition = dice.expression()("4d8U{{{ignore}}}")
+        local definition = dice.expression("4d8U{{{ignore}}}")
         local result, new_definition = DiceRoller:new(definition, rolls):run({ ignore = 2 })
 
         assert.equals(13, result)
@@ -501,7 +501,7 @@ describe("DiceRoller", function()
 
       it("ignores ranges", function()
         local rolls = fixRolls({ 2, 2, 4, 4, 5 })
-        local definition = dice.expression()("4d8U{>3}")
+        local definition = dice.expression("4d8U{>3}")
         local result, new_definition = DiceRoller:new(definition, rolls):run()
 
         assert.equals(15, result)
@@ -509,7 +509,7 @@ describe("DiceRoller", function()
       end)
 
       it("limits infinite rerolls", function()
-        local definition = dice.expression()("2d4U")
+        local definition = dice.expression("2d4U")
         local result = DiceRoller:new(definition, maxRandom):run()
 
         assert.equals(8, result)
@@ -519,7 +519,7 @@ describe("DiceRoller", function()
     describe("explode", function()
       describe("explode_once", function()
         it("only explodes dice once", function()
-          local definition = dice.expression()("2d4!!")
+          local definition = dice.expression("2d4!!")
 
           local result, new_definition = DiceRoller:new(definition, maxRandom):run()
 
@@ -533,7 +533,7 @@ describe("DiceRoller", function()
         end)
 
         it("explodes with extra dice", function()
-          local definition = dice.expression()("d4!!2")
+          local definition = dice.expression("d4!!2")
 
           local result, new_definition = DiceRoller:new(definition, maxRandom):run()
 
@@ -546,7 +546,7 @@ describe("DiceRoller", function()
         end)
 
         it("supports variables", function()
-          local definition = dice.expression()("d4!!{{explode_count}}")
+          local definition = dice.expression("d4!!{{explode_count}}")
 
           local result, new_definition = DiceRoller:new(definition, maxRandom):run({ explode_count = 3 })
           assert.includes({
@@ -559,7 +559,7 @@ describe("DiceRoller", function()
         end)
 
         it("explodes with custom rolls", function()
-          local definition = dice.expression()("d4!!{4=[1d8]}")
+          local definition = dice.expression("d4!!{4=[1d8]}")
           local result, new_definition = DiceRoller:new(definition, maxRandom):run()
 
           assert.are.same({
@@ -571,7 +571,7 @@ describe("DiceRoller", function()
 
         it("explodes patterns once", function()
           local rolls = fixRolls({ 1, 3, 3, 2, 100, 10000 })
-          local definition = dice.expression()("4d4!!{(3,3)}")
+          local definition = dice.expression("4d4!!{(3,3)}")
           local result = DiceRoller:new(definition, rolls):run()
 
           assert.equals(109, result)
@@ -579,7 +579,7 @@ describe("DiceRoller", function()
 
         it("supports varuables in patterns", function()
           local rolls = fixRolls({ 1, 2, 3, 10, 100, 10000 })
-          local definition = dice.expression()("3d4!!{({{first}},{{second}})}")
+          local definition = dice.expression("3d4!!{({{first}},{{second}})}")
           local result = DiceRoller:new(definition, rolls):run({ first = 2, second = 3 })
 
           assert.equals(16, result)
@@ -589,7 +589,7 @@ describe("DiceRoller", function()
       describe("explode_many", function()
         it("retains modifiers for explosion rolls", function()
           local rolls = fixRolls({ 4, 1 })
-          local definition = dice.expression()("d4!C<2")
+          local definition = dice.expression("d4!C<2")
           local result = DiceRoller:new(definition, rolls):run()
 
           assert.same(6, result)
@@ -597,7 +597,7 @@ describe("DiceRoller", function()
 
         it("does not retain modifiers for subexpression explosion rolls", function()
           local rolls = fixRolls({ 4, 1 })
-          local definition = dice.expression()("d4!{4=[d4]}C<2")
+          local definition = dice.expression("d4!{4=[d4]}C<2")
           local result = DiceRoller:new(definition, rolls):run()
 
           assert.same(5, result)
@@ -605,14 +605,14 @@ describe("DiceRoller", function()
 
         it("explodes on the maximum roll", function()
           local rolls = fixRolls({ 4, 4, 4, 4, 3, 4 })
-          local definition = dice.expression()("d4!")
+          local definition = dice.expression("d4!")
           local result = DiceRoller:new(definition, rolls):run()
 
           assert.equals(19, result)
         end)
 
         it("limits explosions to 1000 rounds", function()
-          local definition = dice.expression()("2d4!")
+          local definition = dice.expression("2d4!")
 
           local result, new_definition = DiceRoller:new(definition, maxRandom):run()
           assert.equal(2002, #new_definition.rolls)
@@ -624,7 +624,7 @@ describe("DiceRoller", function()
         it("rolls reducing dice for each roll", function()
           local rolls = fixRolls({ 7, 5, 2, 2, 1, 1, 100 })
 
-          local definition = dice.expression()("2d8!!!")
+          local definition = dice.expression("2d8!!!")
           local result, new_definition = DiceRoller:new(definition, rolls):run()
 
           assert.equal(18, result)

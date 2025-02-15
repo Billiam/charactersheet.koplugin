@@ -1,11 +1,10 @@
-local parser = require("charsheet/lib/dice_parser/parser")
 local dice = require("charsheet/lib/dice_parser/dice_parser")
 local _t = require("charsheet/lib/table_util")
 
 describe("dice", function()
   describe("digits", function()
     it("matches integers", function()
-      local result = dice.expression()("15")
+      local result = dice.expression("15")
 
       assert.includes({
         rest = "",
@@ -15,7 +14,7 @@ describe("dice", function()
     end)
 
     it("matches decimals", function()
-      local result = dice.expression()("12.5")
+      local result = dice.expression("12.5")
 
       assert.includes({
         rest = "",
@@ -27,7 +26,7 @@ describe("dice", function()
 
   describe("keep", function()
     it("matches keep highest", function()
-      local result = dice.keep()("K")
+      local result = dice.keep("K")
 
       assert.includes({
         rest = "",
@@ -40,7 +39,7 @@ describe("dice", function()
     end)
 
     it("matches keep highest with count", function()
-      local result = dice.keep()("K3")
+      local result = dice.keep("K3")
 
       assert.includes({
         rest = "",
@@ -53,7 +52,7 @@ describe("dice", function()
     end)
 
     it("matches keep lowest", function()
-      local result = dice.keep()("KL")
+      local result = dice.keep("KL")
 
       assert.includes({
         rest = "",
@@ -66,7 +65,7 @@ describe("dice", function()
     end)
 
     it("matches keep lowest with count", function()
-      local result = dice.keep()("KL3")
+      local result = dice.keep("KL3")
 
       assert.includes({
         rest = "",
@@ -79,7 +78,7 @@ describe("dice", function()
     end)
 
     it("matches keep middle", function()
-      local result = dice.keep()("KM")
+      local result = dice.keep("KM")
 
       assert.includes({
         rest = "",
@@ -92,7 +91,7 @@ describe("dice", function()
     end)
 
     it("matches keep middle with count", function()
-      local result = dice.keep()("KM3")
+      local result = dice.keep("KM3")
 
       assert.includes({
         rest = "",
@@ -107,7 +106,7 @@ describe("dice", function()
 
   describe("drop", function()
     it("matches drop highest", function()
-      local result = dice.drop()("H")
+      local result = dice.drop("H")
       assert.includes({
         rest = "",
         parser = "drop",
@@ -119,7 +118,7 @@ describe("dice", function()
     end)
 
     it("matches drop highest with count", function()
-      local result = dice.drop()("H3")
+      local result = dice.drop("H3")
       assert.includes({
         rest = "",
         parser = "drop",
@@ -131,7 +130,7 @@ describe("dice", function()
     end)
 
     it("matches drop lowest", function()
-      local result = dice.drop()("L")
+      local result = dice.drop("L")
 
       assert.includes({
         rest = "",
@@ -144,7 +143,7 @@ describe("dice", function()
     end)
 
     it("matches drop lowest with count", function()
-      local result = dice.drop()("L3")
+      local result = dice.drop("L3")
 
       assert.equal("drop", result.type)
       assert.includes({
@@ -159,7 +158,7 @@ describe("dice", function()
 
     describe("drop conditionally", function()
       it("returns drop conditions", function()
-        local result = dice.drop()("D{<3}")
+        local result = dice.drop("D{<3}")
 
         assert.includes({
           rest = "",
@@ -177,7 +176,7 @@ describe("dice", function()
       end)
 
       it("returns multiple drop conditions", function()
-        local result = dice.drop()("D{<2,4,>5,>=6}")
+        local result = dice.drop("D{<2,4,>5,>=6}")
 
         assert.includes({
           rest = "",
@@ -219,7 +218,7 @@ describe("dice", function()
 
   describe("clamp", function()
     it("returns minimum clamp conditions", function()
-      local result = dice.clamp()("C<2")
+      local result = dice.clamp("C<2")
 
       assert.includes({
         rest = "",
@@ -232,7 +231,7 @@ describe("dice", function()
     end)
 
     it("returns maximum clamp conditions", function()
-      local result = dice.clamp()("C>5")
+      local result = dice.clamp("C>5")
 
       assert.includes({
         rest = "",
@@ -245,7 +244,7 @@ describe("dice", function()
     end)
 
     it("returns range clamp conditions", function()
-      local result = dice.clamp()("C<2>5")
+      local result = dice.clamp("C<2>5")
 
       assert.includes({
         rest = "",
@@ -265,14 +264,14 @@ describe("dice", function()
   -- TODO: should modifiers use a table with keys, or an array of types?
   describe("unique", function()
     it("return a unique flag", function()
-      local result = dice.unique()("U")
+      local result = dice.unique("U")
 
       assert.equal("unique", result.parser)
       assert.are.same({}, result.values)
     end)
 
     it("returns non-rerolled conditions", function()
-      local result = dice.unique()("U{5}")
+      local result = dice.unique("U{5}")
 
       assert.includes({
         rest = "",
@@ -292,7 +291,7 @@ describe("dice", function()
 
   describe("replacement", function()
     it("returns a direct value map", function()
-      local result = dice.valueReplacement()("V{4=6,5=6}")
+      local result = dice.valueReplacement("V{4=6,5=6}")
 
       assert.includes({
         rest = "",
@@ -327,7 +326,7 @@ describe("dice", function()
     end)
 
     it("returns ranged value map", function()
-      local result = dice.valueReplacement()("V{<5=0,>15=20}")
+      local result = dice.valueReplacement("V{<5=0,>15=20}")
 
       assert.includes({
         rest = "",
@@ -362,7 +361,7 @@ describe("dice", function()
     end)
 
     it("replaces values with random ranges", function()
-      local result = dice.valueReplacement()("V{>5=10..20}")
+      local result = dice.valueReplacement("V{>5=10..20}")
 
       assert.includes({
         rest = "",
@@ -391,7 +390,7 @@ describe("dice", function()
     end)
 
     it("replaces values with new rolls", function()
-      local result = dice.valueReplacement()("V{>5=[2d6]}")
+      local result = dice.valueReplacement("V{>5=[2d6]}")
 
       assert.includes({
         rest = "",
@@ -422,7 +421,7 @@ describe("dice", function()
 
   describe("explode", function()
     it("matches explosion", function()
-      local result = dice.explode()("!")
+      local result = dice.explode("!")
 
       assert.includes({
         rest = "",
@@ -437,7 +436,7 @@ describe("dice", function()
     end)
 
     it("explodes extra dice", function()
-      local result = dice.explode()("!3")
+      local result = dice.explode("!3")
 
       assert.includes({
         rest = "",
@@ -449,7 +448,7 @@ describe("dice", function()
     end)
 
     it("explodes on selectable values", function()
-      local result = dice.explode()("!{<2,6}")
+      local result = dice.explode("!{<2,6}")
 
       assert.includes({
         rest = "",
@@ -473,7 +472,7 @@ describe("dice", function()
     end)
 
     it("explodes with a new roll", function()
-      local result = dice.explode()("!{20=[2d6]}")
+      local result = dice.explode("!{20=[2d6]}")
       assert.includes({
         rest = "",
         values = {
@@ -500,7 +499,7 @@ describe("dice", function()
     end)
 
     it("explodes on a roll pattern", function()
-      local result = dice.explode()("!{(6,6,>5)}")
+      local result = dice.explode("!{(6,6,>5)}")
 
       assert.includes({
         rest = "",
@@ -536,7 +535,7 @@ describe("dice", function()
     end)
 
     it("matches explode once", function()
-      local result = dice.explode()("!!")
+      local result = dice.explode("!!")
 
       assert.includes({
         rest = "",
@@ -547,7 +546,7 @@ describe("dice", function()
     end)
 
     it("matches reducing explosion", function()
-      local result = dice.explode()("!!!")
+      local result = dice.explode("!!!")
 
       assert.includes({
         rest = "",
@@ -558,7 +557,7 @@ describe("dice", function()
     end)
 
     it("returns nil on error", function()
-      local result = dice.explode()("{3,6}")
+      local result = dice.explode("{3,6}")
 
       assert.is_nil(result)
     end)
@@ -566,7 +565,7 @@ describe("dice", function()
 
   describe("reroll", function()
     it("matches reroll conditions", function()
-      local result = dice.reroll()("R{2,>5}2")
+      local result = dice.reroll("R{2,>5}2")
 
       assert.includes({
         rest = "",
@@ -597,7 +596,7 @@ describe("dice", function()
 
   describe("count", function()
     it("matches count", function()
-      local result = dice.count()("#")
+      local result = dice.count("#")
 
       assert.includes({
         rest = "",
@@ -607,7 +606,7 @@ describe("dice", function()
     end)
 
     it("supports count conditions", function()
-      local result = dice.count()("#{<4,5}")
+      local result = dice.count("#{<4,5}")
 
       assert.includes({
         rest = "",
@@ -634,7 +633,7 @@ describe("dice", function()
 
   describe("diceModifier", function()
     it("matches complex modifiers", function()
-      local result = dice.dieModifier()("KL3H3L2D{<4}!{4,20=[2d8]}C<2U{5}#{<2,5}R{2}3V{>5=[2d6]}")
+      local result = dice.dieModifier("KL3H3L2D{<4}!{4,20=[2d8]}C<2U{5}#{<2,5}R{2}3V{>5=[2d6]}")
 
       assert.includes({
         rest = "",
@@ -773,7 +772,7 @@ describe("dice", function()
 
   describe("die", function()
     it("matches dice rolls", function()
-      local result = dice.die()("2d20")
+      local result = dice.die("2d20")
 
       assert.includes({
         rest = "",
@@ -790,7 +789,7 @@ describe("dice", function()
     end)
 
     it("quantity is optional", function()
-      local result = dice.die()("d6")
+      local result = dice.die("d6")
 
       assert.includes({
         rest = "",
@@ -809,7 +808,7 @@ describe("dice", function()
 
   describe("dieRoll", function()
     it("matches rolls and modifiers", function()
-      local result = dice.dieRoll()("2d20H")
+      local result = dice.dieRoll("2d20H")
 
       assert.includes({
         quantity = {
@@ -840,7 +839,7 @@ describe("dice", function()
     for _, method in ipairs(methods) do
       describe(method, function()
         it("matches method usage", function()
-          local result = dice.method()(method .. "(1.5)")
+          local result = dice.method(method .. "(1.5)")
           assert.includes({
             rest = "",
 
@@ -855,7 +854,7 @@ describe("dice", function()
         end)
 
         it("requires arguments", function()
-          assert.is_nil(dice.method()(method .. "()"))
+          assert.is_nil(dice.method(method .. "()"))
         end)
       end)
     end
@@ -863,7 +862,7 @@ describe("dice", function()
 
   describe("expression", function()
     it("parses basic arithmatic", function()
-      local result = dice.expression()("1-2+3")
+      local result = dice.expression("1-2+3")
 
       assert.includes({
         rest = "",
@@ -892,7 +891,7 @@ describe("dice", function()
     end)
 
     it("parses exponents", function()
-      local result = dice.expression()("5*2^3")
+      local result = dice.expression("5*2^3")
 
       assert.includes({
         rest = "",
@@ -929,7 +928,7 @@ describe("dice", function()
     end)
 
     it("supports parentheses", function()
-      local result = dice.expression()("1-(2+3)")
+      local result = dice.expression("1-(2+3)")
 
       assert.includes({
         rest = "",
@@ -967,7 +966,7 @@ describe("dice", function()
 
     describe("variables", function()
       it("supports variables", function()
-        local result = dice.expression()("2+{{strength}}")
+        local result = dice.expression("2+{{strength}}")
         assert.includes({
           type = "addition",
           values = {
@@ -992,7 +991,7 @@ describe("dice", function()
       end)
 
       it("supports variables in place of dice roll components", function()
-        local result = dice.expression()("{{q}}d{{sides}}")
+        local result = dice.expression("{{q}}d{{sides}}")
 
         assert.equal("", result.rest)
         assert.includes({
@@ -1009,7 +1008,7 @@ describe("dice", function()
       end)
 
       it("returns a list for nested values", function()
-        local result = dice.expression()("{{a.b.c}}")
+        local result = dice.expression("{{a.b.c}}")
         assert.includes({
           type = "variable",
           values = { "a", "b", "c" }
@@ -1018,7 +1017,7 @@ describe("dice", function()
     end)
 
     it("multiplication has higher precedence", function()
-      local result = dice.expression()("1-2*3")
+      local result = dice.expression("1-2*3")
 
       assert.includes({
         parser = "addition",
@@ -1055,7 +1054,7 @@ describe("dice", function()
     end)
 
     it("parses dice rolls", function()
-      local result = dice.expression()("d6+1")
+      local result = dice.expression("d6+1")
 
       assert.includes({
         rest = "",
