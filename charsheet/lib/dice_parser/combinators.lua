@@ -1,4 +1,5 @@
 local _t = require("charsheet/lib/table_util")
+local NIL = {}
 
 local method_cache = function(builder)
   local cache = {}
@@ -7,6 +8,22 @@ local method_cache = function(builder)
       cache[...] = builder(...)
     end
     return cache[...]
+  end
+end
+
+local cache = function(parser)
+  local cache = {}
+  return function(str)
+    if not cache[str] then
+      local result = parser(str)
+      cache[str] = result or NIL
+      return result
+    end
+
+    local result = cache[str]
+    if result ~= NIL then
+      return result
+    end
   end
 end
 
@@ -31,7 +48,7 @@ local label = function(name, parser)
 end
 
 local literal = method_cache(function(chars)
-  return label("literal", function(str)
+  return cache(label("literal", function(str)
     local begin_chars = str:sub(1, #chars)
     if begin_chars == chars then
       return {
@@ -39,7 +56,7 @@ local literal = method_cache(function(chars)
         rest = str:sub(#chars + 1)
       }
     end
-  end)
+  end))
 end)
 
 local toLiteral = function(parser)
@@ -88,11 +105,11 @@ end
 
 local optional = method_cache(function(parser)
   parser = toLiteral(parser)
-  return function(str)
+  return cache(function(str)
     return parser(str) or {
       rest = str
     }
-  end
+  end)
 end)
 
 local concatenate = function(parser)
@@ -331,6 +348,7 @@ return {
   any = any,
   between = between,
   capture = capture,
+  cache = cache,
   captureValues = captureValues,
   concatenate = concatenate,
   dropLeftValue = dropLeftValue,

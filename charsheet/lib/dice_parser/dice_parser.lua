@@ -19,7 +19,7 @@ local appendMath = function(operator, type)
 end
 
 local buildArithmetic = function(name, type, operator)
-  return c.label(name, c.map(
+  return c.cache(c.label(name, c.map(
     c.sequence(type, c.nOrMore(1, appendMath(operator, type))), function(result)
       local r = {
         type = result.parser,
@@ -36,7 +36,7 @@ local buildArithmetic = function(name, type, operator)
       end
       return r
     end)
-  )
+  ))
 end
 
 local numberStr = c.concatenate(c.sequence(c.match("^%d+"), c.optional(c.match("^%.%d+"))))
