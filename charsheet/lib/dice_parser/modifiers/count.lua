@@ -1,6 +1,6 @@
 local operations = require("charsheet/lib/dice_parser/operations")
 
-return function(die, rolls, _)
+return function(die, rolls, roller)
   if not die.modifiers.count then
     return
   end
@@ -10,9 +10,12 @@ return function(die, rolls, _)
   if #conditions == 0 then
     conditions = { { operator = "=", value = die.sides } }
   end
+
   for _, roll in ipairs(rolls) do
     for _, condition in ipairs(conditions) do
-      if operations.equality[condition.operator](roll.value, condition.value.value) then
+      local value, new_definition = roller(condition.value)
+      condition.value = new_definition
+      if operations.equality[condition.operator](roll.value, value) then
         total = total + 1
         break
       end

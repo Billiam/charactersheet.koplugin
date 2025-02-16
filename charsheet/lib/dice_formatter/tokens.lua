@@ -9,6 +9,9 @@ end
 local operator_token = function(value)
   return { type = "operator", value = value }
 end
+local separator_token = function(value)
+  return { type = "separator", value = value }
+end
 
 local add_die_token = function(roll, output)
   local result = _t.clone(roll)
@@ -44,7 +47,7 @@ end
 local add_math_tokens = function(definition, output)
   for i, child in ipairs(definition.values) do
     if i > 1 then
-      table.insert(output, { type = "operator", value = child.operator })
+      table.insert(output, operator_token(child.operator))
     end
     process_expression(child.value, output)
   end
@@ -54,6 +57,30 @@ add_sub_roll = function(definition, output)
   table.insert(output, paren_token("("))
   add_roll_tokens(definition, output)
   table.insert(output, paren_token(")"))
+
+  if definition.modifiers.count then
+    table.insert(output, paren_token("["))
+    for i, condition in ipairs(definition.modifiers.count.values) do
+      if i > 1 then
+        table.insert(output, separator_token(","))
+      end
+      table.insert(output, operator_token(condition.operator))
+      process_expression(condition.value, output)
+    end
+    table.insert(output, paren_token("]"))
+  end
+end
+
+local add_method = function(definition, output)
+  table.insert(output, { type = "method", value = definition.method })
+  table.insert(output, paren_token("("))
+  for i, value in ipairs(definition.values) do
+    if i > 1 then
+      table.insert(output, separator_token(","))
+    end
+    process_expression(value, output)
+  end
+  table.insert(output, paren_token(")"))
 end
 
 process_expression = function(definition, output)
@@ -62,11 +89,12 @@ process_expression = function(definition, output)
   if definition.left == "(" then
     table.insert(output, paren_token(definition.left))
   end
-
   if definition.parser == "addition" or definition.parser == "multiplication" then
     add_math_tokens(definition, output)
   elseif definition.type == "die_roll" then
     add_sub_roll(definition, output)
+  elseif definition.type == "method" then
+    add_method(definition, output)
   elseif definition.type == "number" then
     local value = definition.value * (definition.negate and -1 or 1)
     table.insert(output, { type = "number", value = value })

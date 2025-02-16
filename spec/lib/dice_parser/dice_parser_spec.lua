@@ -606,7 +606,7 @@ describe("dice", function()
     end)
 
     it("supports count conditions", function()
-      local result = dice.count("#{<4,5}")
+      local result = dice.count("#{<4,5,>[2d6]}")
 
       assert.includes({
         rest = "",
@@ -626,6 +626,18 @@ describe("dice", function()
             },
             operator = "="
           },
+          {
+            value = {
+              type = "die_roll",
+              quantity = {
+                value = 2
+              },
+              sides = {
+                value = 6
+              }
+            },
+            operator = ">"
+          }
         }
       }, result)
     end)
@@ -833,8 +845,8 @@ describe("dice", function()
 
   describe("method", function()
     local methods = { "abs", "acos", "asin", "atan2", "atan", "ceil", "roundup", "rup", "clamp", "cos", "floor",
-      "rounddown", "rdown", "lerp", "mod", "pow", "rnd", "round", "roundeven", "reven", "roundtoeven", "roundfromzero",
-      "roundodd", "rodd", "roundtoodd", "roundtozero", "truncate", "trunc", "sign", "sin", "sqrt", "tan" }
+      "rounddown", "rdown", "lerp", "max", "min", "mod", "pow", "rnd", "round", "roundeven", "reven", "roundtoeven",
+      "roundfromzero", "roundodd", "rodd", "roundtoodd", "roundtozero", "truncate", "trunc", "sign", "sin", "sqrt", "tan" }
 
     for _, method in ipairs(methods) do
       describe(method, function()

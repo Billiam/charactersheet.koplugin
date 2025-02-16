@@ -51,6 +51,10 @@ end
 local dieRollDefinition
 local dieRoll = function(str) return dieRollDefinition(str) end
 
+local bracketExpression = c.between("[", "]", expression)
+local parenExpression = c.between("(", ")", expression)
+
+local bracketDieRoll = c.between("[", "]", dieRoll)
 local multipleExpressions = c.label("multiple_expressions", c.list(",", expression))
 
 local buildMethod = function(...)
@@ -77,6 +81,8 @@ local clampMethod = buildMethod("clamp")
 local cos = buildMethod("cos")
 local floor = buildMethod("floor", "rounddown", "rdown")
 local lerp = buildMethod("lerp")
+local max = buildMethod("max")
+local min = buildMethod("min")
 local mod = buildMethod("mod")
 local pow = buildMethod("pow")
 local rnd = buildMethod("rnd")
@@ -100,6 +106,8 @@ local method = c.any(
   cos,
   floor,
   lerp,
+  max,
+  min,
   mod,
   pow,
   rnd,
@@ -176,9 +184,6 @@ local defaultInteger = function(default)
     end
   )
 end
-
-local bracketExpression = c.between("[", "]", expression)
-local parenExpression = c.between("(", ")", expression)
 
 local equalsExpression = c.label("is_expression", c.map(c.sequence(
   "=",
@@ -441,12 +446,23 @@ local reroll = c.label("reroll", c.map(
   end
 ))
 
+local valueInequality = c.label("number_inequality", c.map(c.sequence(
+  c.optional(inequality),
+  c.any(fixedValue, bracketExpression)
+), function(result)
+  local r = _t.clone(result)
+  r.inequality = result.values[1].value
+  r.value = result.values[2]
+  r.values = nil
+  return r
+end))
+
 local count = c.label("count", c.map(
   c.dropLeftValue(1,
     c.sequence(
       "#",
       c.optional(c.between("{", "}",
-        c.list(",", numberInequality)
+        c.list(",", valueInequality)
       ))
     )
   ), function(result)
@@ -467,8 +483,6 @@ local count = c.label("count", c.map(
     return r
   end
 ))
-
-local bracketDieRoll = c.between("[", "]", dieRoll)
 
 local replacementValue = c.label("replacement_value", c.any(range, fixedValue, bracketDieRoll))
 
