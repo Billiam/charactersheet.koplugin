@@ -1,6 +1,9 @@
 local c = require("charsheet/lib/dice_parser/combinators")
 local _t = require("charsheet/lib/table_util")
 
+local whitespace = c.label("whitespace", c.optional(c.match("^ +")))
+local _ = whitespace
+
 local toNumber = function(result)
   local r = _t.clone(result)
   r.value = tonumber(r.value)
@@ -9,18 +12,18 @@ local toNumber = function(result)
 end
 
 local appendMath = function(operator, type)
-  return c.map(c.sequence(operator, type), function(result)
+  return c.map(c.sequence(operator, _, type), function(result)
     return {
       rest = result.rest,
       operator = result.values[1].value,
-      value = result.values[2]
+      value = result.values[3]
     }
   end)
 end
 
 local buildArithmetic = function(name, type, operator)
   return c.cache(c.label(name, c.map(
-    c.sequence(type, c.nOrMore(1, appendMath(operator, type))), function(result)
+    c.sequence(type, _, c.nOrMore(1, appendMath(operator, type))), function(result)
       local r = {
         type = result.parser,
         rest = result.rest,
@@ -31,7 +34,7 @@ local buildArithmetic = function(name, type, operator)
           },
         }
       }
-      for i, v in ipairs(result.values[2].values) do
+      for i, v in ipairs(result.values[3].values) do
         r.values[i + 1] = v
       end
       return r
@@ -51,17 +54,27 @@ end
 local dieRollDefinition
 local dieRoll = function(str) return dieRollDefinition(str) end
 
-local bracketExpression = c.between("[", "]", expression)
-local parenExpression = c.between("(", ")", expression)
+local l_paren = c.sequence("(", _)
+local r_paren = c.sequence(_, ")")
+local l_bracket = c.sequence("[", _)
+local r_bracket = c.sequence(_, "]")
+local l_brace = c.sequence("{", _)
+local r_brace = c.sequence(_, "}")
+local l_dbrace = c.sequence("{{", _)
+local r_dbrace = c.sequence(_, "}}")
+local comma = c.sequence(_, ",", _)
 
-local bracketDieRoll = c.between("[", "]", dieRoll)
-local multipleExpressions = c.label("multiple_expressions", c.list(",", expression))
+local bracketExpression = c.between(l_bracket, r_bracket, expression)
+local parenExpression = c.between(l_paren, r_paren, expression)
+
+local bracketDieRoll = c.between(l_bracket, r_bracket, dieRoll)
+local multipleExpressions = c.label("multiple_expressions", c.list(comma, expression))
 
 local buildMethod = function(...)
   local names = { ... }
   local method_name = #names > 1 and c.any(...) or c.literal(names[1])
 
-  return c.map(c.sequence(method_name, c.between("(", ")", multipleExpressions)),
+  return c.map(c.sequence(method_name, c.between(l_paren, r_paren, multipleExpressions)),
     function(result)
       return {
         rest = result.rest,
@@ -69,7 +82,8 @@ local buildMethod = function(...)
         method = names[1],
         values = result.values[2].values
       }
-    end)
+    end
+  )
 end
 
 local abs = buildMethod("abs")
@@ -145,7 +159,7 @@ local variables = c.label("variable",
   )
 )
 
-local interpolation = c.between(c.literal("{{"), c.literal("}}"), variables)
+local interpolation = c.between(l_dbrace, r_dbrace, variables)
 
 local fixedValue = c.label("fixed_value", c.any(number, interpolation, method))
 
@@ -160,11 +174,12 @@ local inequality = c.label("inequality", c.concatenate(
 
 local numberInequality = c.label("number_inequality", c.map(c.sequence(
   c.optional(inequality),
+  _,
   fixedValue
 ), function(result)
   local r = _t.clone(result)
   r.inequality = result.values[1].value
-  r.value = result.values[2]
+  r.value = result.values[3]
   r.values = nil
   return r
 end))
@@ -187,9 +202,10 @@ end
 
 local equalsExpression = c.label("is_expression", c.map(c.sequence(
   "=",
+  _,
   bracketExpression
 ), function(result)
-  return result.values[2]
+  return result.values[3]
 end))
 
 local die = c.label("die", c.map(c.sequence(
@@ -260,7 +276,7 @@ local dropLowest = c.label("drop_lowest", c.map(
 ))
 
 local dropRolls = c.label("drop_rolls", c.map(
-  c.list(",", numberInequality), function(result)
+  c.list(comma, numberInequality), function(result)
     local r = _t.clone(result)
     r.values = _t.map(result.values, function(option)
       return {
@@ -273,7 +289,7 @@ local dropRolls = c.label("drop_rolls", c.map(
 ))
 
 local dropCondition = c.label("drop_condition", c.map(
-  c.dropLeftValue(1, c.sequence(c.literal("D"), c.between("{", "}", dropRolls))),
+  c.dropLeftValue(1, c.sequence(c.literal("D"), c.between(l_brace, r_brace, dropRolls))),
   function(result)
     return {
       type = "drop",
@@ -310,7 +326,6 @@ local range = c.label("range", c.map(
     fixedValue, "..", fixedValue
   ),
   function(result)
-    -- TODO clone in map
     local r = _t.clone(result)
     r.from = result.values[1]
     r.to = result.values[3]
@@ -321,8 +336,8 @@ local range = c.label("range", c.map(
 ))
 
 local explodeRerollPattern = c.label("explode_reroll_pattern", c.map(
-  c.between("(", ")",
-    c.list(",", numberInequality)
+  c.between(l_paren, r_paren,
+    c.list(comma, numberInequality)
   ),
   function(result)
     return {
@@ -338,8 +353,8 @@ local explodeRerollPattern = c.label("explode_reroll_pattern", c.map(
   end
 ))
 
-local explodeConditions = c.label("explode_conditions", c.between("{", "}",
-  c.list(",",
+local explodeConditions = c.label("explode_conditions", c.between(l_brace, r_brace,
+  c.list(comma,
     c.map(
       c.sequence(
         c.any(
@@ -423,8 +438,8 @@ local reroll = c.label("reroll", c.map(
   c.dropLeftValue(1,
     c.sequence(
       "R",
-      c.between("{", "}",
-        c.list(",", numberInequality)
+      c.between(l_brace, r_brace,
+        c.list(comma, numberInequality)
       ),
       c.optional(numberInequality)
     )
@@ -448,11 +463,12 @@ local reroll = c.label("reroll", c.map(
 
 local valueInequality = c.label("number_inequality", c.map(c.sequence(
   c.optional(inequality),
+  _,
   c.any(fixedValue, bracketExpression)
 ), function(result)
   local r = _t.clone(result)
   r.inequality = result.values[1].value
-  r.value = result.values[2]
+  r.value = result.values[3]
   r.values = nil
   return r
 end))
@@ -461,8 +477,8 @@ local count = c.label("count", c.map(
   c.dropLeftValue(1,
     c.sequence(
       "#",
-      c.optional(c.between("{", "}",
-        c.list(",", valueInequality)
+      c.optional(c.between(l_brace, r_brace,
+        c.list(comma, valueInequality)
       ))
     )
   ), function(result)
@@ -490,13 +506,16 @@ local replacementValue = c.label("replacement_value", c.any(range, fixedValue, b
 local valueReplacement = c.label("value_replacement", c.map(
   c.nthValue(2, c.sequence(
     "V",
-    c.between("{", "}",
+    c.between(l_brace, r_brace,
       c.list(
-        ",",
+        comma,
         c.sequence(
           c.optional(c.any("<", ">")),
+          _,
           fixedValue,
+          _,
           "=",
+          _,
           replacementValue
         )
       )
@@ -506,9 +525,9 @@ local valueReplacement = c.label("value_replacement", c.map(
       rest = result.rest
     }
     r.values = _t.map(result.values, function(replacement)
-      local parsed_replacement = replacement.values[4]
+      local parsed_replacement = replacement.values[7]
       local value = {
-        value = replacement.values[2],
+        value = replacement.values[3],
         operator = replacement.values[1].value or "=",
       }
 
@@ -535,8 +554,8 @@ local valueReplacement = c.label("value_replacement", c.map(
 
 local unique = c.label("unique", c.map(
   c.sequence(c.literal("U"),
-    c.optional(c.between("{", "}",
-      c.list(",", numberInequality)
+    c.optional(c.between(l_brace, r_brace,
+      c.list(comma, numberInequality)
     ))), function(result)
     local r = {
       rest = result.rest,
