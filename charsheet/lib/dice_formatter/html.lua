@@ -2,7 +2,7 @@ local tokenFormatter = require("charsheet/lib/dice_formatter/tokens")
 local _t = require("charsheet/lib/table_util")
 
 local span = function(class, text)
-  return "<span class='" .. class .. "'>" .. tostring(text):gsub(">", "&gt;"):gsub(">", "&lt;") .. "</span>"
+  return "<span class='" .. class .. "'>" .. tostring(text):gsub(">", "&gt;"):gsub("<", "&lt;") .. "</span>"
 end
 
 local css = [[
